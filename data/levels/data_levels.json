@@ -1,0 +1,122 @@
+{
+  "levels": [
+    {
+      "filename": "level_1.txt",
+      "enemies": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "speed_spawn": 0.2,
+      "bonuses": 3
+    },
+    {
+      "filename": "level_1.txt",
+      "enemies": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      "speed_spawn": 0.2,
+      "bonuses": 3
+    },
+    {
+      "filename": "level_2.txt",
+      "enemies": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "speed_spawn": 0.2,
+      "bonuses": 3
+    },
+    {
+      "filename": "level_3.txt",
+      "enemies": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "speed_spawn": 0.2,
+      "bonuses": 3
+    },
+    {
+      "filename": "level_4.txt",
+      "enemies": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "speed_spawn": 0.2,
+      "bonuses": 3
+    },
+    {
+      "filename": "level_test.txt",
+      "enemies": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3
+      ],
+      "speed_spawn": 0.2,
+      "bonuses": 3
+    }
+  ]
+}
