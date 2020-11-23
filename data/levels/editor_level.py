@@ -81,10 +81,10 @@ class EditorLevels(QMainWindow):
 
     def save_level(self):
         data = '\n'.join([''.join(list(map(lambda x: x.get_symbol(), row))) for row in self.field])
-        with open('level.txt' if not self.edit_filename else self.edit_filename, mode='w', encoding='utf8') as file:
+        with open('level_2.txt' if not self.edit_filename else self.edit_filename, mode='w', encoding='utf8') as file:
             file.write(data)
         try:
-            self.setWindowTitle(f'Файл был сохранён как {self.edit_filename if self.edit_filename else "level.txt"}')
+            self.setWindowTitle(f'Файл был сохранён как {self.edit_filename if self.edit_filename else "level_2.txt"}')
         finally:
             pass
 
@@ -107,7 +107,7 @@ class Brush(QPushButton):
 
 class Cell(QPushButton):
     icons = {
-        0: ('QPushButton{background-color: black;}', ' ', 'Пустота'),
+        0: ('QPushButton{background-color: #101010}', ' ', 'Пустота'),
         1: ('QPushButton{background-color: #aa0000;}', '-', 'Кирпич'),
         2: ('QPushButton{background-color: gray;}', '=', 'Бетон'),
         3: ('QPushButton{background-color: blue;}', '0', 'Вода'),

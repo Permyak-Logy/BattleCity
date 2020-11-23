@@ -1,19 +1,21 @@
-from engine import Application, Layout
-from math import sqrt
-from typing import Union, Literal
-
+from engine import *
 from widgets import *
 from const import *
 from extra import *
 
+from math import sqrt
+from typing import Union, Literal, Optional, List
+
 import pygame
 import json
+import random
 
 
 class Game(Layout):
     count_tanks_labels: list
-    life_player_1: PDisplayNumber
-    life_player_2: PDisplayNumber
+    life_player_1_display: PDisplayNumber
+    life_player_2_display: PDisplayNumber
+    number_level_display: PDisplayNumber
 
     def __init__(self, application: Application, layout_config_filename: str = None):
         super().__init__(application, layout_config_filename=layout_config_filename)
@@ -52,37 +54,48 @@ class Game(Layout):
         img_background_right_label = pygame.Surface(size=(100, HEIGHT_W * 2))
         img_background_right_label.fill(BG_COLOR)
 
-        background_right_label = PLabel(layout=self)
-        background_right_label.resize((100, HEIGHT_W * 2))
-        background_right_label.set_pos((WIDTH_W - 50, 0))
+        background_right_label = PLabel()
+        background_right_label.resize((SIZE_SMALL_CELL * 4, HEIGHT_W))
+        background_right_label.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL, 0))
         background_right_label.set_bg_image(img_background_right_label)
         background_right_label.flip()
-        self.add_widget(background_right_label)
 
         icon_tank = pygame.Surface(size=(1, 1))
         icon_tank.fill((100, 0, 0))
         self.count_tanks_labels = [
             PLabel().set_bg_image(icon_tank).resize(
                 (SIZE_SMALL_CELL, SIZE_SMALL_CELL)).set_pos(
-                (WIDTH_W - int(SIZE_SMALL_CELL * 3.5) + SIZE_SMALL_CELL * (i % 2),
-                 70 + SIZE_SMALL_CELL * (i // 2))).set_font(pygame.font.Font(None, 20)).flip()
+                (WIDTH_W - SIZE_MINI_CELL * 7 + SIZE_SMALL_CELL * (i % 2),
+                 SIZE_SMALL_CELL * (i // 2 + 2))).set_font(pygame.font.Font(None, 20)).flip()
             for i in range(20)
         ]
-        self.add_widgets(*self.count_tanks_labels)
 
-        self.life_player_1 = PDisplayNumber(self, Animation.cut_sheet(
-            load_image("data\\image\\numbers.png"), 5, 2), 3)
-        self.life_player_1.set_bg_image(img_background_right_label)
-        self.life_player_1.resize(size=(SIZE_SMALL_CELL * 3, SIZE_SMALL_CELL))
-        self.life_player_1.set_pos((WIDTH_W - SIZE_SMALL_CELL * 4, 300)).flip()
+        self.life_player_1_display = PDisplayNumber(Animation.cut_sheet(
+            load_image("data\\image\\numbers.png", -1), 5, 2), 2)
+        self.life_player_1_display.set_align('L')
+        self.life_player_1_display.set_bg_image(img_background_right_label)
+        self.life_player_1_display.resize(size=(SIZE_SMALL_CELL * 2, SIZE_SMALL_CELL))
+        self.life_player_1_display.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL * 2, SIZE_LARGE_CELL * 8)).flip()
 
-        self.life_player_2 = PDisplayNumber(self, Animation.cut_sheet(
-            load_image("data\\image\\numbers.png"), 5, 2), 3)
-        self.life_player_2.set_bg_image(img_background_right_label)
-        self.life_player_2.resize(size=(SIZE_SMALL_CELL * 3, SIZE_SMALL_CELL))
-        self.life_player_2.set_pos((WIDTH_W - SIZE_SMALL_CELL * 4, 400)).flip()
+        self.life_player_2_display = PDisplayNumber(Animation.cut_sheet(
+            load_image("data\\image\\numbers.png", -1), 5, 2), 2)
+        self.life_player_2_display.set_align('L')
+        self.life_player_2_display.set_bg_image(img_background_right_label)
+        self.life_player_2_display.resize(size=(SIZE_SMALL_CELL * 2, SIZE_SMALL_CELL))
+        self.life_player_2_display.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL * 2, SIZE_LARGE_CELL * 10)).flip()
 
-        self.add_widgets(self.life_player_1, self.life_player_2)
+        self.number_level_display = PDisplayNumber(Animation.cut_sheet(
+            load_image("data\\image\\numbers.png", -1), 5, 2), 3)
+        self.number_level_display.set_align('R')
+        self.number_level_display.set_bg_image(img_background_right_label)
+        self.number_level_display.resize(size=(SIZE_SMALL_CELL * 3, SIZE_SMALL_CELL))
+        self.number_level_display.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL, SIZE_LARGE_CELL * 12)).flip()
+
+        self.add_widgets(background_right_label,
+                         *self.count_tanks_labels,
+                         self.life_player_1_display,
+                         self.life_player_2_display,
+                         self.number_level_display)
 
     def render(self, screen: pygame.Surface):
         """Отрисовка всех объектов"""
@@ -130,8 +143,8 @@ class Game(Layout):
         with open("data\\levels\\data_levels.json", encoding="utf8") as file:
             self.global_data["levels_data"] = json.load(file)["levels"]
 
-        self.global_data["life_player_1"] = 2
-        self.global_data["life_player_2"] = 2 if players_is_2 else 0
+        self.global_data["life_player_1"] = 3
+        self.global_data["life_player_2"] = 3 if players_is_2 else 0
 
         self.global_data["player_1_stars"] = 0
         self.global_data["player_2_stars"] = 0
@@ -161,7 +174,7 @@ class Game(Layout):
             3: random.choice([3, 4])
         }
         self.level_data.setdefault('bonuses', 3)
-        self.level_data.setdefault('speed_spawn', 0.2)
+        self.level_data.setdefault('speed_spawn', 0.3)
         self.level_data.setdefault('max_tanks', 10)
 
     def run_animation_hide_level_map(self):
@@ -223,7 +236,7 @@ class Game(Layout):
             if hasattr(player, 'number') and player.number == number:
                 return player
 
-    def get_spawns(self, spawn_class):
+    def get_spawns(self, spawn_class) -> list:
         """Возвращает спавн указанного объкта"""
 
         result = []
@@ -254,6 +267,7 @@ class Game(Layout):
         # Загружаем уровень
         self.init_level_data(self.global_data["level_index"] + 1)
         self.generate_level(data_level=self.load_level(f"data\\levels\\{self.level_data['filename']}"))
+        self.number_level_display.set_cur_number(self.global_data['level_index'] + 1).flip()
 
         # Рисуем номер уровня
         self.draw_level_number(self.app.screen, self.global_data["level_index"] + 1)
@@ -325,9 +339,6 @@ class Game(Layout):
                 elif obj_code == 'S':
                     Spawn(self, (x / 2, y / 2), Enemy, _can_spawn_enemy)
 
-        [Bonus(self, (random.randrange(WIDTH_F * 2) / 2, random.randrange(HEIGHT_F * 2) / 2))
-         for _ in range(3)]
-
     def update(self, *args):
         """Обновление каждый tick"""
 
@@ -348,7 +359,6 @@ class Game(Layout):
 
         # Проверяем на окончание игры
         if not self.level_finished and (self.check_on_win() or self.check_on_lose()):
-            print(self.check_on_win(), self.check_on_lose())
             if self.check_on_lose():
                 self.run_animation_game_over()
             self.level_finished = True
@@ -376,11 +386,15 @@ class Game(Layout):
                 widget.set_bg_image(icon_death).flip()
 
         # Обновляем количество жизней у игрока
-        self.life_player_1.set_cur_number(self.global_data['life_player_1']).flip()
-        self.life_player_2.set_cur_number(self.global_data['life_player_2']).flip()
+        spawns_players: List[Spawn] = self.get_spawns(Player)
+        spawns_players = sorted(spawns_players, key=lambda s: s.kwargs_for_spawn['number'])
+        self.life_player_1_display.set_cur_number(self.global_data['life_player_1'] - int(spawns_players[0].spawning)
+                                                  - int(bool(self.get_player(1)))).flip()
+        self.life_player_2_display.set_cur_number(self.global_data['life_player_2'] - int(spawns_players[1].spawning)
+                                                  - int(bool(self.get_player(2)))).flip()
 
     def check_on_win(self) -> bool:
-        return len(self.level_data["enemies"]) + sum(map(lambda s: s.spawning, self.get_spawns(Enemy))) == 0
+        return not self.get_count_enemy_left() > 0
 
     def check_on_lose(self) -> bool:
         hd = self.headquarters_group.sprites()[0]
@@ -388,11 +402,15 @@ class Game(Layout):
             return True
         tanks = len(self.player_group.sprites())
         life = self.global_data['life_player_1'] + self.global_data['life_player_2']
-        return not life and not tanks
+        return not (life or tanks)
+
+    def get_count_enemy_left(self) -> int:
+        enemies_ready = len(self.level_data["enemies"])
+        active_enemies = len(self.enemy_group.sprites())
+        return enemies_ready + active_enemies
 
     def on_open(self, players_is_2=False):
         """Событие вызываемое при открытии этой области"""
-
         self.init_global_data(players_is_2)
         self.next_level()
 
@@ -499,52 +517,65 @@ class Actor(pygame.sprite.Sprite):
     true_x: float
     true_y: float
 
-    cur_animation: str
-    cur_animation2 = None
     image: pygame.Surface
     rect: pygame.Rect
     sound_shot = None
 
-    def __init__(self, layout: Game, size=None, pos=(0, 0)):
+    def __init__(self, layout: Game, size: Union[list, tuple] = None, pos=(0., 0.)):
         super().__init__(layout.all_sprites)
         self.layout = layout
-        self.animations = {}
-        if not size:
-            size = SIZE_LARGE_CELL, SIZE_LARGE_CELL
+
+        # Все анимации объекта
+        self.animations_data = {}
+        self.animation = []
+
+        self.cur_animation2 = None  # Порядок наложения
+
+        # Редактируем size под нужный формат
+        if size is None:
+            size = (SIZE_LARGE_CELL, SIZE_LARGE_CELL)
+        size = list(map(int, size))
+
         # Изображение по умолчанию
         image = pygame.Surface(size=size)
         image.fill(pygame.color.Color('purple'))
+        # Скрываем изображение по умолчанию если нужно
         if self.hide_default_image:
             image.set_colorkey(pygame.color.Color('purple'))
+
         self.rect = image.get_rect()
         self.set_state_image(image)
-        self.change_animation("state_0_0_-1")
 
-        self.sight = [0, -1]
+        self.set_animation("state_0_0_-1")
+
+        self.sight = [0, -1]  # Взгляд (по умолчанию вверх)
+
+        self.health = 1  # Здоровье
+        self.armor = 0  # Броня
         self.is_damaged = False  # Может получать урон?
-        self.armor = 0  # Количество поглощаемого урона
         self.max_stars = self.stars = 0  # Звёзды объекта
-        self.health = 1
-
         self.set_pos(pos)
 
     def __repr__(self):
         return f"{self.__class__.__name__}(x={repr(self.rect.x)} y={repr(self.rect.y)} " \
-               f"stars={repr(self.stars)} cur_animation={repr(self.cur_animation)})"
+               f"stars={repr(self.stars)} animations={repr(self.animation)})"
 
     def init_state_animation(self, sheet: pygame.Surface, columns=1, rows=1, star=0):
+        """Создает анимацию стояния по всем направлениям из одного сета"""
         animations = Animation.create_in_all_directions(sheet, columns=columns, rows=rows)
-        self.animations[f"state_{star}_0_-1"] = animations[0]
-        self.animations[f"state_{star}_-1_0"] = animations[1]
-        self.animations[f"state_{star}_0_1"] = animations[2]
-        self.animations[f"state_{star}_1_0"] = animations[3]
+        self.animations_data[f"state_{star}_0_-1"] = animations[0]
+        self.animations_data[f"state_{star}_-1_0"] = animations[1]
+        self.animations_data[f"state_{star}_0_1"] = animations[2]
+        self.animations_data[f"state_{star}_1_0"] = animations[3]
 
     def set_image(self, image: pygame.Surface):
+        """Устанавливает картинку на просмотр с масштабированием"""
         self.image = pygame.transform.scale(image, (self.rect.width, self.rect.height))
 
     def set_state_image(self, image: pygame.Surface):
+        """Устанавливает картнику как по умолчанию (в отличии от init_state_animation только в направлении (0, -1))"""
+        self.animations_data["state_0_0_-1"] = Animation(image, 1, 1)
         self.set_image(image)
-        self.animations["state_0_0_-1"] = Animation(image, 1, 1)
 
     def set_pos(self, pos: tuple):
         """Устанавливает позиции на сетке карты по большим квадратам"""
@@ -559,9 +590,10 @@ class Actor(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = int(self.true_x), int(self.true_y)
 
     def add_coords(self, x: float, y: float):
+        """Добавляет координаты к объекту"""
         self.set_coords(self.true_x + x, self.true_y + y)
 
-    def half_damage(self, damage, passage):
+    def half_damage(self, damage: int, passage: int):
         """Получение урона"""
         if self.sound_shot:
             self.sound_shot.play()
@@ -572,47 +604,42 @@ class Actor(pygame.sprite.Sprite):
             return
         self.health -= damage
 
-    def change_animation(self, key, discharge_old=False):
-        if key not in self.animations.keys():
+    def set_animation(self, key: Optional[str], index=0, discharge_old=False):
+        """Устанавливает анимацию на слой с индексом index"""
+        assert -1 <= index, "Индекс выходит за интервалы"
+        if key not in self.animations_data.keys() and key is not None:
             raise ValueError(f"Анимации {key} у объекта не существует")
 
-        if discharge_old:
-            self.animations[self.cur_animation].discharge()
+        try:
+            if discharge_old and self.animation[index] is not None and index != -1:
+                self.animations_data[self.animation[index]].discharge()
+            self.animation[index] = key
 
-        self.cur_animation = key
-
-    def change_animation2(self, key, discharge_old=False):
-
-        if key not in self.animations.keys() and key is not None:
-            raise ValueError(f"Анимации {key} у объекта не существует")
-
-        if discharge_old:
-            self.animations[self.cur_animation].discharge()
-
-        self.cur_animation2 = key
+        except IndexError:
+            assert 0 <= index, f"{index} слишком большой! Дополнять анимации можно только справа"
+            while len(self.animation) < index + 1:
+                self.animation.append(None)
+            self.animation[index] = key
 
     def update(self, *args):
         tick = get_tick(args)
         try:
-            self.change_animation(f"state_{self.stars}_{self.sight[0]}_{self.sight[1]}")
+            self.set_animation(f"state_{self.stars}_{self.sight[0]}_{self.sight[1]}")
         except ValueError:
             try:
-                self.change_animation(f"state_0_{self.sight[0]} {self.sight[1]}")
+                self.set_animation(f"state_0_{self.sight[0]} {self.sight[1]}")
             except ValueError:
-                self.change_animation(f"state_0_0_-1")
+                self.set_animation(f"state_0_0_-1")
         self.update_animation(tick)
         if self.is_damaged and self.health <= 0:
             self.kill()
 
     def update_animation(self, tick):
-        anim: Animation = self.animations[self.cur_animation]
-        anim.update(tick)
-        anim.draw(self)
-
-        anim2 = self.animations.get(self.cur_animation2)
-        if anim2:
-            anim2.update(tick)
-            anim2.draw(self)
+        for key_anim in self.animation:
+            if key_anim is not None:
+                anim: Animation = self.animations_data.get(key_anim)
+                anim.update(tick)
+                anim.draw(self)
 
     def get_center(self):
         return self.rect.centerx, self.rect.centery
@@ -633,137 +660,17 @@ class Actor(pygame.sprite.Sprite):
         return sqrt((xya[0] - xyb[0]) ** 2 + (xya[1] - xyb[1]) ** 2)
 
 
-class Animation:
-    def __init__(self, sheet=pygame.Surface(size=(1, 1)), columns=1, rows=1, transform_data=None):
-        self.frames_run = self.cut_sheet(sheet, columns, rows, transform_data)
-        self.cur_index = 0.
-        self.speed = 1.
-        self.speed_m = 5.7
-        self.rep = 0
-        self.max_rep = -1
-
-        # Тип наложения анимации: "f" заменяет картинку, "b" накладывает поверх
-        self.type_drawing = "f"
-
-        # Параметры при типе анимации "b"
-        self.pos = (0, 0)  # Отступ на картинке от левого верхнего угла
-        self.size = -1  # Размер накладываемого кадра
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(speed={repr(self.speed)} " \
-               f"max_rep={repr(self.max_rep)} screens={repr(len(self))})"
-
-    def __len__(self):
-        return len(self.frames_run)
-
-    def __add__(self, other):
-        pass
-
-    def set_max_rep(self, val):
-        self.max_rep = val
-        return self
-
-    def set_type(self, val: str):
-        if val not in ["b", "f"]:
-            raise ValueError(f"Типа анимации {val} не существует")
-        self.type_drawing = val
-        return self
-
-    def set_size(self, size):
-        pass
-
-    def set_pos(self, pos: tuple):
-        self.pos = pos
-
-    def discharge(self):
-        self.cur_index = 0
-        self.rep = 0
-
-    def update(self, *args):
-        if self.rep != self.max_rep:
-            tick = get_tick(args)
-            self.cur_index += (tick / 1000) * self.speed * self.speed_m
-            if self.cur_index >= len(self):
-                self.cur_index %= len(self)
-                self.rep += 1
-            if self.rep == self.max_rep:
-                self.cur_index = -1
-
-    def set_speed(self, val: float):
-        self.speed = val
-        return self
-
-    def set_speed_m(self, val: float):
-        self.speed_m = val
-        return self
-
-    def draw(self, actor: Actor):
-        if self.type_drawing == "b":
-            if self.size == -1:
-                size = actor.rect.size
-            else:
-                size = self.size
-            actor.image.blit(pygame.transform.scale(self.get_screen(), size), self.pos)
-        elif self.type_drawing == "f":
-            actor.set_image(self.get_screen())
-
-    def get_screen(self):
-        return self.frames_run[int(self.cur_index)]
-
-    @staticmethod
-    def zip(*animations):
-        result = []
-        for i in zip(*list(map(lambda x: x.frames_run, animations))):
-            result += list(i)
-        new_a = Animation()
-        new_a.frames_run = result
-        return new_a
-
-    @staticmethod
-    def cut_sheet(sheet: pygame.Surface, columns: int, rows: int, transform_data=None):
-        """Разделение доски анимации и возвращение списка кадров"""
-
-        listen = []
-        rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                           sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (rect.w * i, rect.h * j)
-                image = sheet.subsurface(
-                    pygame.Rect(frame_location, rect.size)
-                )
-                if transform_data:
-                    image = pygame.transform.flip(
-                        image, *transform_data.get("flip", (False, False))
-                    )
-                    image = pygame.transform.rotate(
-                        image, transform_data.get("rotate", 0)
-                    )
-                listen.append(image)
-
-        return listen
-
-    def set_sheet(self, sheet: list):
-        self.frames_run = sheet
-        self.cur_index = 0
-
-    @staticmethod
-    def create_in_all_directions(sheet: pygame.Surface, columns=1, rows=1):
-        """Возвращает анимации по направлениям WASD соответственно"""
-        return (
-            Animation(sheet, columns, rows, {"rotate": 0, "flip": (False, False)}),
-            Animation(sheet, columns, rows, {"rotate": 270, "flip": (False, True)}),
-            Animation(sheet, columns, rows, {"rotate": 0, "flip": (False, True)}),
-            Animation(sheet, columns, rows, {"rotate": 90, "flip": (True, True)})
-        )
-
-
 class Character(Actor):
     """
     Игровые персонажи
     """
+    sound_attack: pygame.mixer.Sound
+    sound_state: pygame.mixer.Sound
+    sound_moving: pygame.mixer.Sound
+    sound_half_damage: pygame.mixer.Sound
+    sound_explosion_tank: pygame.mixer.Sound
 
-    def __init__(self, layout: Game, size=None, pos=(0, 0), stars=0):
+    def __init__(self, layout: Game, size=None, pos=(0, 0)):
         super().__init__(layout, size=size, pos=pos)
         self.add(
             layout.character_group,
@@ -771,53 +678,52 @@ class Character(Actor):
             layout.collision_bullet_group
         )
 
+        self.init_immortality_animation()
         self.init_state_animation(self.image, 1, 1, 0)
         self.init_moving_animation(self.image, 1, 1, 0)
-        self.animations["immortality"] = Animation(load_image("data\\image\\immortality.png", -1), 2, 1)
-        self.animations["immortality"].set_type("b")
-        self.animations["immortality"].set_speed(5)
 
-        self.moving = [0, 0]
-        self.travel_speed = 1
-        self.max_stars = stars
+        self.init_sounds()
+        self.sound_channel = None
 
-        self.delta_aligh = 0.2
-        self.delta_aligh_on_ice = 0.1
+        self.moving = [0, 0]  # Направление движения
+        self.travel_speed = 1  # Скорость движения
 
-        self.max_bullets = 1
-        self.bullets_ready = 0
-        self.charging_rate = 1.2
+        self.delta_aligh = 0.2  # Выравнивание на обычной поверхности
+        self.delta_aligh_on_ice = 0.1  # и на льду
 
+        self.damage = 1  # Урон
+        self.passage = 0  # Пробитие
+        self.speed_bullet = 7  # Скорость снарядов
+        self.max_bullets = 1  # Максимальное ко-во снарядов
+        self.bullets_ready = 1  # Имеется снарядов
+        self.charging_rate = 1.2  # Скорострельность
+
+    def init_sounds(self):
         self.sound_attack = pygame.mixer.Sound("data\\music\\Shot.wav")
         self.sound_state = pygame.mixer.Sound("data\\music\\State.wav")
         self.sound_moving = pygame.mixer.Sound("data\\music\\Moving.wav")
         self.sound_half_damage = pygame.mixer.Sound("data\\music\\ShotConcreteWall.wav")
         self.sound_explosion_tank = pygame.mixer.Sound("data\\music\\ExplosionTank.wav")
 
-        self.sound_channel = None
+    def init_immortality_animation(self):
+        self.animations_data["immortality"] = Animation(load_image("data\\image\\immortality.png", -1), 2, 1)
+        self.animations_data["immortality"].set_type("b")
+        self.animations_data["immortality"].set_speed(5)
 
     def init_moving_animation(self, sheet: pygame.Surface, columns=1, rows=1, star=0):
         animations = Animation.create_in_all_directions(sheet, columns, rows)
-        self.animations[f"moving_{star}_0_-1"] = animations[0].set_speed(2)
-        self.animations[f"moving_{star}_-1_0"] = animations[1].set_speed(2)
-        self.animations[f"moving_{star}_0_1"] = animations[2].set_speed(2)
-        self.animations[f"moving_{star}_1_0"] = animations[3].set_speed(2)
+        self.animations_data[f"moving_{star}_0_-1"] = animations[0].set_speed(2)
+        self.animations_data[f"moving_{star}_-1_0"] = animations[1].set_speed(2)
+        self.animations_data[f"moving_{star}_0_1"] = animations[2].set_speed(2)
+        self.animations_data[f"moving_{star}_1_0"] = animations[3].set_speed(2)
 
     def set_null_move(self):
         self.unset_move(self.moving[0], self.moving[1])
 
-    def half_damage(self, damage, passage):
-        if not self.is_damaged:
-            return
-        if passage < self.armor:
-            return
-
-        if self.stars >= 3 and self.health >= 2:
-            self.down_level()
-        else:
-            self.health -= 1
-        if self.health >= 0 and self.sound_channel is not None:
-            self.sound_channel.play(self.sound_half_damage)
+    def half_damage(self, damage: int, passage: int):
+        super().half_damage(damage, passage)
+        if self.health > 0:
+            self.sound_half_damage.play()
 
     def kill(self):
         if self.sound_channel is not None:
@@ -827,22 +733,24 @@ class Character(Actor):
         return super().kill()
 
     def can_attack(self) -> bool:
-        if self.stars < 0:
+        if self.health <= 0:
             return False
         if self.bullets_ready < 1:
             return False
-        if len(list(filter(lambda x: x.sender == self, self.layout.bullet_group.sprites()))) >= self.max_bullets:
+        in_fly_bullets = len(list(filter(lambda x: x.sender == self,
+                                         self.layout.bullet_group.sprites())))
+        if self.bullets_ready + in_fly_bullets > self.max_bullets:
             return False
         return True
 
-    def on_ice(self):
+    def is_on_ice(self):
         return pygame.sprite.spritecollideany(self, self.layout.ice_group)
 
     def align(self):
         nx = (self.rect.x - TOP) // SIZE_SMALL_CELL * SIZE_SMALL_CELL + TOP
         ny = (self.rect.y - LEFT) // SIZE_SMALL_CELL * SIZE_SMALL_CELL + LEFT
 
-        delta = self.delta_aligh if not self.on_ice() else self.delta_aligh_on_ice
+        delta = self.delta_aligh if not self.is_on_ice() else self.delta_aligh_on_ice
 
         if self.rect.x - nx <= delta * SIZE_SMALL_CELL:
             self.set_coords(nx, self.rect.y)
@@ -859,17 +767,16 @@ class Character(Actor):
         if not self.can_attack():
             return
 
-        damage = 1 if self.stars < 3 else 2
-        passage = 0 if self.stars < 3 else 1
-        k_speed = 5 if self.stars < 1 else 7
-
         self.sound_attack.play()
 
-        Bullet(self.layout, sender=self, damage=damage, k_speed=k_speed, passage=passage)
+        Bullet(self.layout, sender=self,
+               damage=self.damage,
+               k_speed=self.speed_bullet,
+               passage=self.passage)
         self.bullets_ready -= 1
 
     def get_moving(self, tick):  # Перемещение
-        m = 1 if not self.on_ice() else random.randint(8, 20) / 10
+        m = 1 if not self.is_on_ice() else random.randint(8, 20) / 10
         return tick / 1000 * SIZE_LARGE_CELL * self.travel_speed * m
 
     def move_up(self, tick):
@@ -965,35 +872,21 @@ class Character(Actor):
         self.align()
         return True
 
-    def up_level(self, value=1):
-        if value < 0:
-            raise ValueError("not value >= 0")
+    def up_stars(self):
+        try:
+            self.__class__.set_stars(self, self.stars + 1)
+        except AssertionError:
+            pass
 
-        if self.stars == self.max_stars:
-            return
-        if self.stars <= 1 and self.stars + value >= 2:
-            self.max_bullets += 2
-            self.bullets_ready += 2
-        if self.stars <= 2 and self.stars + value >= 3:
-            self.health += 1
+    def set_stars(self, value: int):
+        assert 0 <= value <= self.max_stars, "Значение уровня не в пределах допустимых"
+        self.stars = value
 
-        self.stars += value
-        if self.stars > self.max_stars:
-            self.stars = self.max_stars
-
-    def down_level(self, value=1):
-        if value < 0:
-            raise ValueError("not value >= 0")
-
-        if self.stars >= 2 and self.stars - value <= 1:
-            self.max_bullets -= 2
-            if self.bullets_ready > 1:
-                self.bullets_ready = 1
-
-        if self.stars >= 3 and self.stars - value <= 2:
-            self.health -= 1
-
-        self.stars -= value
+    def down_stars(self):
+        try:
+            self.__class__.set_stars(self, self.stars - 1)
+        except AssertionError:
+            pass
 
     def update(self, *args):
         tick = get_tick(args)
@@ -1018,18 +911,18 @@ class Character(Actor):
             self.move_right(tick)
 
         if self.moving[0] == self.moving[1] == 0:
-            if hasattr(self, 'bonus') and self.bonus:
-                self.change_animation(f"state_bonus_{self.sight[0]}_{self.sight[1]}")
+            if hasattr(self, 'bonus') and self.bonus and False:  # TODO включить анимацию бонусного танка
+                self.set_animation(f"state_bonus_{self.sight[0]}_{self.sight[1]}")
             else:
-                self.change_animation(f"state_{self.stars}_{self.sight[0]}_{self.sight[1]}")
+                self.set_animation(f"state_{self.stars}_{self.sight[0]}_{self.sight[1]}")
             if self.sound_channel is not None:
                 if self.sound_channel.get_sound() != self.sound_state:
                     self.sound_channel.play(self.sound_state)
         else:
-            if hasattr(self, 'bonus') and self.bonus:
-                self.change_animation(f"moving_bonus_{self.sight[0]}_{self.sight[1]}")
+            if hasattr(self, 'bonus') and self.bonus and False:  # TODO тоже что выше
+                self.set_animation(f"moving_bonus_{self.sight[0]}_{self.sight[1]}")
             else:
-                self.change_animation(f"moving_{self.stars}_{self.sight[0]}_{self.sight[1]}")
+                self.set_animation(f"moving_{self.stars}_{self.sight[0]}_{self.sight[1]}")
             if self.sound_channel is not None:
                 if self.sound_channel.get_sound() != self.sound_moving:
                     self.sound_channel.play(self.sound_moving)
@@ -1043,13 +936,15 @@ class Character(Actor):
 
 class Player(Character):
     def __init__(self, layout: Game, pos=(0, 0), number=1):
-        super().__init__(layout, pos=pos, stars=3)
+        super().__init__(layout, pos=pos)
         self.add(layout.player_group)
+
         if NO_COLLISION_FOR_PLAYERS:
             self.remove(layout.collision_moving_group)
-        self.number = number
 
-        self.up_level(self.layout.global_data.get(f"player_{number}_stars", 0))
+        self.number = number
+        self.max_stars = 3
+
         self.is_damaged = True
 
         for star in range(0, self.max_stars + 1):
@@ -1059,37 +954,61 @@ class Player(Character):
                                        star=star, columns=2, rows=1)
         self.travel_speed = 3
         self.charging_rate = 10
-        self.up_level(3)
 
         self.sound_channel = pygame.mixer.Channel(number)
+
         self.set_immortality(True, delay=5)
+        self.set_stars(self.layout.global_data.get(f"player_{number}_stars", 0))
 
     def __repr__(self):
         return f"{self.__class__.__name__}(" \
                f"x={self.rect.x} " \
                f"y={self.rect.y} " \
                f"stars={self.stars} " \
-               f"cur_animation={self.cur_animation} " \
+               f"cur_animation={self.animation[0]} " \
                f"number={self.number})"
 
     def set_immortality(self, toggle: bool, delay=0.0):
         self.is_damaged = not toggle
         if not self.is_damaged:
-            self.change_animation2("immortality")
+            self.set_animation("immortality", 2)
             if self.number == 1:
                 pygame.time.set_timer(IMMORTALITY_END_P1, int(delay * 1000), True)
             elif self.number == 2:
                 pygame.time.set_timer(IMMORTALITY_END_P2, int(delay * 1000), True)
         else:
-            self.change_animation2(None)
+            self.set_animation(None, 2)
 
-    def up_level(self, value=1):
-        super().up_level(value)
-        self.layout.global_data[f"player_{self.number}_stars"] = self.stars if self.stars >= 0 else 0
+    def half_damage(self, damage: int, passage: int):
+        old_health = self.health
+        super(Player, self).half_damage(damage, passage)
+        if old_health - self.health >= 1:
+            self.down_stars()
 
-    def down_level(self, value=1):
-        super().down_level(value)
-        self.layout.global_data[f"player_{self.number}_stars"] = self.stars if self.stars >= 0 else 0
+    def set_stars(self, value: int):
+        super().set_stars(value)
+        if value == 0:
+            self.max_bullets = 1
+            self.speed_bullet = 7
+            self.health = 1 if self.health >= 1 else 0
+        if value == 1:
+            self.max_bullets = 1
+            self.speed_bullet = 12
+            self.passage = 0
+            self.health = 1 if self.health >= 1 else 0
+        if value == 2:
+            self.max_bullets = 3
+            self.bullets_ready += 2
+            self.speed_bullet = 12
+            self.passage = 0
+            self.health = 1 if self.health >= 1 else 0
+        if value == 3:
+            self.max_bullets = 3
+            self.bullets_ready += 2
+            self.speed_bullet = 12
+            self.passage = 1
+            self.health = 2 if self.health >= 1 else 0
+        self.layout.global_data[f"player_{self.number}_stars"] = self.stars
 
     def kill(self):
         self.layout.global_data[f"life_player_{self.number}"] -= 1
@@ -1128,21 +1047,24 @@ class Enemy(Character):
             "images_moving": [(f"data\\image\\tank_3_moving_{star}.png", 2, 1)
                               for star in range(4)],
             "travel_speed": 1,
+            "health": 4,
             "max_bullets": 1
         }
     }
 
     def __init__(self, layout: Game, pos=(0, 0)):
-        self._debug_info = False
-        self.asset = self.assets[layout.level_data["enemies"].pop(
-            random.randint(0, len(layout.level_data["enemies"]) - 1))]
-
-        super().__init__(layout, pos=pos, stars=self.asset["stars"])
+        super().__init__(layout, pos=pos)
         self.add(layout.enemy_group)
+
+        self.asset = self.assets[layout.level_data["enemies"].pop(
+            random.randrange(0, len(layout.level_data["enemies"])))]
+
         self.is_damaged = True
-        self.bonus = False
-        self.priority_player = [1, 2]
-        random.shuffle(self.priority_player)
+        self.max_stars = self.stars = self.asset["stars"]
+
+        index_enemy = 20 - len(layout.level_data['enemies']) - 1
+        c = (20 // layout.level_data['bonuses'])
+        self.bonus = index_enemy % c == c - 1
 
         self.delta_aligh = 0.1
         self.delta_aligh_on_ice = 0.1
@@ -1163,47 +1085,14 @@ class Enemy(Character):
 
         self.tasks = {}
 
-        self.time_reset_tasks = 10
-        self.readiness_reset_tasks = 0
-        self.count_fails_auto_create_tasks = 0
-
-        self.skip = False
-
-    def attack(self):
-        if not self.can_attack():
-            return
-
-        Bullet(self.layout, self, self.asset.get("damage", 1), self.asset.get("k_speed", 5))
-        self.bullets_ready -= 1
-
-    def half_damage(self, damage, passage):
-        if not self.is_damaged:
-            return
-        if damage <= self.armor:
-            return
-
-        self.down_level()
-        if self.health >= 0 and self.sound_channel is not None:
-            self.sound_channel.play(self.sound_half_damage)
-
-    def down_level(self, value=1):
-        if value < 0:
-            raise ValueError("not value >= 0")
-        self.stars -= value
-        if self.stars < 0:
-            self.health -= 1
-
-    def up_level(self, value=1):
-        # Следует лишь 1 раз её вызывать
-        if value < 0:
-            raise ValueError("not value >= 0")
-        self.stars += value
-        if self.stars > self.max_stars:
-            self.stars = self.max_stars
+    def half_damage(self, damage: int, passage: int):
+        super().half_damage(damage, passage)
+        self.down_stars()
 
     def set_asset(self):
-        self.stars = self.asset["stars"]
-        self.travel_speed = self.asset["travel_speed"]
+        self.travel_speed = self.asset.get("travel_speed", self.travel_speed)
+        self.speed_bullet = self.asset.get("speed_bullet", self.speed_bullet)
+        self.health = self.asset.get("health", self.health)
 
         self.max_bullets = self.asset.get("max_bullets", self.max_bullets)
         self.charging_rate = self.asset.get("charging_rate", self.charging_rate)
@@ -1211,6 +1100,9 @@ class Enemy(Character):
     def kill(self):
         self.layout.level_data["kills"][self.asset["name"]] += 1
         Score(self.layout, self.get_center(), score=(self.asset["name"] + 1) * 100)
+        if self.bonus:
+            Bonus(layout=self.layout, pos=(0.5 * random.randrange(0, WIDTH_F * 2),
+                                           0.5 * random.randrange(0, WIDTH_F * 2)))
         return super().kill()
 
     def update(self, *args):
@@ -1248,7 +1140,6 @@ class Enemy(Character):
                 task["context"]["__tick__"] = tick
                 task["context"]["__i__"] = i
                 if task["is_complete"](task["context"]):
-                    print(f"complete task \"{task['name']}\"")
                     task["complete"] = True
 
                 if level != can_level_cal:
@@ -1312,8 +1203,6 @@ class Enemy(Character):
             self.tasks[priority_level] = []
         self.tasks[priority_level].append(task)
 
-        print(f"create task \"{task['name']}\"")
-
     def create_task_destroy(self, target: Union[Actor, pygame.sprite.Sprite, None], max_rad_att=REVIEW_RADIUS_ENEMY,
                             priority_level=0):
         if target is None:
@@ -1371,8 +1260,9 @@ class Enemy(Character):
 
         self.create_task(
             name=f"random moving",
-            context={"target_cell": self.get_cell(), "old_coords": self.get_coords(),
-                     "cur_dir": (0, 0), "max_time_wait": 1, "readiness_change_dir": 0},
+            context={"old_coords": self.get_coords(),
+                     "cur_dir": random.choice([(0, 1), (0, -1), (1, 0), (-1, 0)]),
+                     "max_time_wait": 1, "readiness_change_dir": 1},
             update=update,
             priority_level=priority_level
         )
@@ -1392,8 +1282,14 @@ class BrickWall(Actor):
         self.is_damaged = True
         self.stars = 1
         self.armor = 0
+        self.health = 2
 
         # self.sound_shot = pygame.mixer.Sound("data\\music\\ShotBrickWall.wav")
+
+    def half_damage(self, damage: int, passage: int):
+        super().half_damage(damage, passage)
+        if passage > self.armor:
+            self.health -= 1
 
 
 class ConcreteWall(Actor):
@@ -1410,22 +1306,23 @@ class ConcreteWall(Actor):
         self.is_damaged = True
         self.stars = 0
         self.armor = 1
+        self.health = 1
 
         self.sound_shot = pygame.mixer.Sound("data\\music\\ShotConcreteWall.wav")
 
 
 class BonusConcreteWall(ConcreteWall):
-    # TODO: Баг с положением
+    # TODO Заменяют стандартные стены и после на своём месте оставляют уже рабочую стену
     def __init__(self, layout, pos):
         super().__init__(layout, pos)
         self.delay = 10
-        a = self.animations[self.cur_animation]
+        a = self.animations_data[self.animation[0]]
         a.set_speed(1)
         a.set_speed_m(1)
 
     def update(self, *args):
         super().update(*args)
-        if self.animations[self.cur_animation].rep >= 20:
+        if self.animations_data[self.animation[0]].rep >= 3:
             self.kill()
 
 
@@ -1457,23 +1354,25 @@ class Headquarters(Actor):
     def __init__(self, layout: Game, pos):
         super().__init__(layout, pos=pos)
         self.add(layout.headquarters_group, layout.collision_bullet_group, layout.collision_moving_group)
-        self.animations["state_-1_0_-1"] = Animation(load_image("data\\image\\destroyed_headquarters.png", -1))
-        self.animations["state_0_0_-1"] = Animation(load_image("data\\image\\headquarters.png", -1))
+        self.animations_data["state_-1_0_-1"] = Animation(load_image("data\\image\\destroyed_headquarters.png", -1))
+        self.animations_data["state_0_0_-1"] = Animation(load_image("data\\image\\headquarters.png", -1))
         self.is_damaged = True
+        self.armor = 0
+        self.health = 1
         self.is_destroy = False
 
     def update(self, *args):
         tick = get_tick(args)
         if self.stars < 0 and self.is_damaged:
             self.is_damaged = False
-            self.change_animation(f"state_-1_0_-1")
+            self.set_animation(f"state_-1_0_-1")
             BigBang(self.layout, self.get_center())
-            # pygame.time.set_timer(EVENT_LEVEL_FINISHED, 5 * 1000)
+            pygame.time.set_timer(EVENT_LEVEL_FINISHED, 5 * 1000)
             self.remove(self.layout.collision_bullet_group)
             self.is_destroy = True
 
         elif self.is_damaged:
-            self.change_animation(f"state_{self.stars}_{self.sight[0]}_{self.sight[1]}")
+            self.set_animation(f"state_{self.stars}_{self.sight[0]}_{self.sight[1]}")
         self.update_animation(tick)
 
 
@@ -1483,7 +1382,7 @@ class UnbreakableWall(Actor):
         self.add(layout.unbreakable_wall_group, layout.collision_moving_group, layout.collision_bullet_group)
         image = pygame.Surface(size=(1, 1))
         image.fill(BG_COLOR)
-        self.animations["state_0_0_-1"] = Animation(image)
+        self.animations_data["state_0_0_-1"] = Animation(image)
 
 
 class Bullet(Actor):
@@ -1501,7 +1400,7 @@ class Bullet(Actor):
         self.is_damaged = True
 
         self.init_state_animation(load_image("data\\image\\bullet.png", -1))
-        self.change_animation(f"state_{self.stars}_{sender.sight[0]}_{sender.sight[1]}")
+        self.set_animation(f"state_{self.stars}_{sender.sight[0]}_{sender.sight[1]}")
 
         # Перемещаем снаряд в его 0-ое положение
         self.set_coords(
@@ -1541,7 +1440,7 @@ class Bullet(Actor):
                 sprite: Actor
 
                 if isinstance(self.sender, Player):
-                    # Ломаемся обовсё но наносим урон только не своим объектам
+                    # Ломаемся обо всё но наносим урон только не своим объектам
                     if not isinstance(sprite, Player) and not (isinstance(sprite, Bullet) and
                                                                isinstance(sprite.sender, Player)):
                         sprite.half_damage(self.damage, self.passage)
@@ -1579,7 +1478,7 @@ class Effect(Actor):
     def update(self, *args):
         tick = get_tick(args)
         self.update_animation(tick)
-        if self.animations[self.cur_animation].rep == self.rep:
+        if self.animations_data[self.animation[0]].rep == self.rep:
             self.kill()
 
 
@@ -1587,14 +1486,14 @@ class ShellExplosion(Effect):
     def __init__(self, layout, coords):
         super().__init__(layout, coords, rep=1)
         self.init_state_animation(load_image("data\\image\\shell_explosion.png", -1), 3, 1)
-        self.animations[self.cur_animation].set_speed(5)
+        self.animations_data[self.animation[0]].set_speed(5)
 
 
 class BigBang(Effect):
     def __init__(self, layout, coords):
         super().__init__(layout, coords, rep=1, size=(SIZE_LARGE_CELL * 2, SIZE_LARGE_CELL * 2))
         self.init_state_animation(load_image("data\\image\\big_bang.png", -1), 3, 1)
-        self.animations[self.cur_animation].set_speed(1.2)
+        self.animations_data[self.animation[0]].set_speed(1.2)
 
         self.damaged_actors = set()
 
@@ -1610,18 +1509,13 @@ class BigBang(Effect):
 
 class Score(Effect):
     def __init__(self, layout, coords, score=100):
-        super().__init__(layout, coords, rep=5, size=(int(SIZE_SMALL_CELL * 1.4), int(SIZE_SMALL_CELL * 0.7)))
+        super().__init__(layout, coords, rep=5, size=(int(SIZE_SMALL_CELL * 2), int(SIZE_SMALL_CELL)))
 
         self.score = score
         self.init_state_animation(
             Animation.cut_sheet(load_image("data\\image\\scores.png", -1), 5, 1)[score // 100 - 1])
-        self.animations[self.cur_animation].set_speed(1)
-        self.animations[self.cur_animation].set_speed(1)
-
-    def update(self, *args):
-        tick = get_tick(args)
-        self.add_coords(0, - tick / 1000 * SIZE_SMALL_CELL * 1.5)
-        super().update(*args)
+        self.animations_data[self.animation[0]].set_speed(1)
+        self.animations_data[self.animation[0]].set_speed(1)
 
 
 class Spawn(Actor):
@@ -1633,9 +1527,9 @@ class Spawn(Actor):
         image.fill((0, 0, 0))
         self.set_state_image(image)
 
-        self.animations["spawning"] = Animation(load_image("data/image/spawn.png", -1), 6, 1)
-        self.animations["spawning"].set_max_rep(5)
-        self.animations["spawning"].set_speed(2.5)
+        self.animations_data["spawning"] = Animation(load_image("data/image/spawn.png", -1), 6, 1)
+        self.animations_data["spawning"].set_max_rep(5)
+        self.animations_data["spawning"].set_speed(2.5)
 
         self.pos_spawn = pos
         self.character_class: Character.__class__ = character_class
@@ -1647,21 +1541,23 @@ class Spawn(Actor):
         tick = get_tick(args)
         self.update_animation(tick)
         if self.spawning:
-            if self.animations["spawning"].rep == 3:
-                self.change_animation("state_0_0_-1", discharge_old=True)
+            if self.animations_data["spawning"].rep == 3:
+                self.set_animation("state_0_0_-1", discharge_old=True)
                 self.spawning = False
                 self.character_class(self.layout, self.pos_spawn, **self.kwargs_for_spawn)
                 self.remove(self.layout.collision_moving_group)
         elif (not pygame.sprite.spritecollideany(self, self.layout.collision_moving_group) and
               self.check_func(self.layout)):
             self.spawning = True
-            self.change_animation("spawning")
+            self.set_animation("spawning")
             self.add(self.layout.collision_moving_group)
 
 
 class Bonus(Actor):
     def __init__(self, layout: Game, pos, key=None):
         super().__init__(layout, pos=pos)
+        if ONLY_ONE_BONUS_ON_MAP:
+            layout.bonuses_group.empty()
         self.add(layout.bonuses_group)
 
         if key is None:
@@ -1678,16 +1574,21 @@ class Bonus(Actor):
         img2.set_colorkey(img2.get_at((0, 0)))
 
         self.set_state_image(img)
-        a: Animation = self.animations[self.cur_animation]
-
-        a.set_sheet([img, pygame.Surface(size=(1, 1))])
-        a.set_speed(2)
-        a.set_type('f')
-        a.set_speed_m(5)
+        # TODO: Поправить баг с отабражением анимации
+        # a: Animation = self.animations_data[self.animation[0]]
+        # a.set_sheet([img, pygame.Surface(size=(1, 1))])
+        # a.set_speed(2)
+        # a.set_type('f')
+        # a.set_speed_m(5)
 
     def update(self, *args):
         self.update_animation(get_tick(args))
-        if self.animations[self.cur_animation].rep == 600:
+        if self.animations_data[self.animation[0]].rep % 2 == 0:
+            self.image.set_alpha(0)
+        else:
+            self.image.set_alpha(200)
+
+        if self.animations_data[self.animation[0]].rep == 600:
             self.kill()
 
         sprites = pygame.sprite.spritecollide(self, self.layout.player_group, False)
@@ -1711,16 +1612,18 @@ class Bonus(Actor):
                 return
             x, y = h.get_cell()
             for i in range(4):
-                BonusConcreteWall(self.layout, (x + 0.5 * (i - 1), y - 0.5))
-                BonusConcreteWall(self.layout, (x + 0.5 * (i - 1), y + 1))
+                BonusConcreteWall(self.layout, (x + 0.5 * (i - 2), y))
+                BonusConcreteWall(self.layout, (x + 0.5 * (i - 2), y + 1.5))
             for i in range(2):
-                BonusConcreteWall(self.layout, (x + 1, y + 0.5 * i))
-                BonusConcreteWall(self.layout, (x - 0.5, y + 0.5 * i))
+                BonusConcreteWall(self.layout, (x + 0.5, y + 0.5 * (i + 1)))
+                BonusConcreteWall(self.layout, (x - 1, y + 0.5 * (i + 1)))
+                pass
         elif self.key == 3:
-            by.up_level()
+            by.up_stars()
         elif self.key == 4:
             [s.kill() for s in self.layout.enemy_group.sprites()]
         elif self.key == 5:
             self.layout.global_data[f"life_player_{by.number}"] += 1
         elif self.key == 6:
-            by.up_level(by.max_stars - by.stars)
+            by.set_stars(3)
+            by.passage += 1

@@ -6,6 +6,7 @@ from win32api import GetSystemMetrics
 from extra import load_image, get_tick
 import configparser
 from typing import Union, Tuple
+from widgets import PPushButton
 
 
 class Application:
@@ -128,8 +129,6 @@ class Application:
                 if event.type == pygame.QUIT:
                     self.stop()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 3:
-                        breakpoint()
                     self.dispatch_event_layout('on_mouse_press', event)
                 elif event.type == pygame.KEYDOWN:
                     self.dispatch_event_layout('on_key_press', event)
@@ -181,8 +180,7 @@ class Layout:
     image_background: pygame.Surface = None
     config: dict = None
     """
-    Пространство игры. Это некий контейнер, хранящий разные виджеты и игровые объекты и т.п.
-    Используется для реализации режимов игры (Например Меню и самой игровой области)
+    Класс для поверхностей
     """
 
     def __init__(self, application: Application, layout_config_filename=None):
@@ -198,7 +196,6 @@ class Layout:
         self.widget_group = pygame.sprite.Group()
 
     def load_config(self, filename: str):
-        print(filename, __file__)
         with open(filename, encoding='utf8') as file:
             self.config = json.load(file)
 
@@ -232,6 +229,11 @@ class Layout:
 
         self.image_background = image
 
+    def on_mouse_press(self, event):
+        for widget in self.widget_group:
+            if isinstance(widget, PPushButton) and widget.on_click(event.pos):
+                break
+
     def add_widget(self, widget):
         widget.add(self.widget_group)
 
@@ -245,3 +247,133 @@ class Layout:
     def remove_widgets(self, *widgets):
         for widget in widgets:
             self.remove_widget(widget)
+
+
+class Animation:
+    def __init__(self, sheet=pygame.Surface(size=(1, 1)), columns=1, rows=1, transform_data=None):
+        self.frames_run = self.cut_sheet(sheet, columns, rows, transform_data)
+        self.cur_index = 0.
+        self.speed = 1.
+        self.speed_m = 5.7
+        self.rep = 0
+        self.max_rep = -1
+
+        # Тип наложения анимации: "f" заменяет картинку, "b" накладывает поверх
+        self.type_drawing = "f"
+
+        # Параметры при типе анимации "b"
+        self.pos = (0, 0)  # Отступ на картинке от левого верхнего угла
+        self.size = -1  # Размер накладываемого кадра
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(speed={repr(self.speed)} " \
+               f"max_rep={repr(self.max_rep)} screens={repr(len(self))})"
+
+    def __len__(self):
+        return len(self.frames_run)
+
+    def __add__(self, other):
+        pass
+
+    def set_max_rep(self, val):
+        self.max_rep = val
+        return self
+
+    def set_type(self, val: str):
+        if val not in ["b", "f"]:
+            raise ValueError(f"Типа анимации {val} не существует")
+        self.type_drawing = val
+        return self
+
+    def set_size(self, size):
+        pass
+
+    def set_pos(self, pos: tuple):
+        self.pos = pos
+
+    def discharge(self):
+        self.cur_index = 0
+        self.rep = 0
+
+    def update(self, *args):
+        if self.rep != self.max_rep:
+            tick = get_tick(args)
+            self.cur_index += (tick / 1000) * self.speed * self.speed_m
+            if self.cur_index >= len(self):
+                self.cur_index %= len(self)
+                self.rep += 1
+            if self.rep == self.max_rep:
+                self.cur_index = -1
+
+    def set_speed(self, val: float):
+        self.speed = val
+        return self
+
+    def set_speed_m(self, val: float):
+        self.speed_m = val
+        return self
+
+    def draw(self, actor: pygame.sprite.Sprite):
+        if self.size == -1:
+            size = actor.rect.size
+        else:
+            size = self.size
+        img = pygame.transform.scale(self.get_screen(), size)
+
+        if self.type_drawing == "b":
+            actor.image.blit(img, self.pos)
+        elif self.type_drawing == "f":
+            if hasattr(actor, 'set_image'):
+                actor.set_image(self.get_screen())
+            else:
+                actor.image = img
+
+    def get_screen(self):
+        return self.frames_run[int(self.cur_index)]
+
+    @staticmethod
+    def zip(*animations):
+        result = []
+        for i in zip(*list(map(lambda x: x.frames_run, animations))):
+            result += list(i)
+        new_a = Animation()
+        new_a.frames_run = result
+        return new_a
+
+    @staticmethod
+    def cut_sheet(sheet: pygame.Surface, columns: int, rows: int, transform_data=None):
+        """Разделение доски анимации и возвращение списка кадров"""
+
+        listen = []
+        rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                           sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (rect.w * i, rect.h * j)
+                image = sheet.subsurface(
+                    pygame.Rect(frame_location, rect.size)
+                )
+                if transform_data:
+                    image = pygame.transform.flip(
+                        image, *transform_data.get("flip", (False, False))
+                    )
+                    image = pygame.transform.rotate(
+                        image, transform_data.get("rotate", 0)
+                    )
+                listen.append(image)
+
+        return listen
+
+    def set_sheet(self, sheet: list):
+        self.frames_run = sheet
+        self.cur_index = 0
+
+    @staticmethod
+    def create_in_all_directions(sheet: pygame.Surface, columns=1, rows=1):
+        """Возвращает анимации по направлениям WASD соответственно"""
+        return (
+            Animation(sheet, columns, rows, {"rotate": 0, "flip": (False, False)}),
+            Animation(sheet, columns, rows, {"rotate": 270, "flip": (False, True)}),
+            Animation(sheet, columns, rows, {"rotate": 0, "flip": (False, True)}),
+            Animation(sheet, columns, rows, {"rotate": 90, "flip": (True, True)})
+        )

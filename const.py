@@ -10,7 +10,7 @@ SIZE_F = WIDTH_F, HEIGHT_F = 13, 13
 
 # Отступы в пикселях
 TOP, BOTTOM = SIZE_SMALL_CELL, SIZE_SMALL_CELL
-LEFT, RIGHT = SIZE_LARGE_CELL, SIZE_LARGE_CELL + 50
+LEFT, RIGHT = SIZE_LARGE_CELL, SIZE_MINI_CELL * 9
 
 # Размеры окна в пикселях
 SIZE_W = WIDTH_W, HEIGHT_W = (
@@ -26,6 +26,8 @@ FREEZING_END = 32778
 
 # # Игровые настройки
 FRAMES_FROM_EXPLOSIONS = False  # Взрывы от танков наносят урон (Нестандартное дополнение)
+ONLY_ONE_BONUS_ON_MAP = False  # Только один бонус на карте (При новом, все старые очищаются)
+SHOW_FPS = False  # Переключатель данных о быстродействии
 
 # Настройки ИИ (недействительны)
 REVIEW_RADIUS_ENEMY = 2.5  # Обзор танков противника
