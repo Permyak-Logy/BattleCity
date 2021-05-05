@@ -25,6 +25,12 @@ class Menu(Layout):
         background.fill((100, 100, 100))
         font = pygame.font.SysFont('OCR A Extended', int(SIZE_SMALL_CELL * 1.5))
 
+        self.logo_lbl = PLabel()
+        self.logo_lbl.resize((SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 10))
+        self.logo_lbl.set_pos((SIZE_LARGE_CELL * 3, 0))
+        self.logo_lbl.set_bg_image(load_image("data\\image\\logo.jpg"))
+        self.add_widget(self.logo_lbl.flip())
+
         self.play_1_player_button = PPushButton("1 Player")
         self.play_1_player_button.resize((SIZE_LARGE_CELL * 4, SIZE_LARGE_CELL))
         self.play_1_player_button.set_pos((SIZE_LARGE_CELL * 6, SIZE_LARGE_CELL * 8))
@@ -57,11 +63,7 @@ class Menu(Layout):
         self.company_2_lbl.set_color_text(pygame.Color('purple'))
         self.add_widget(self.company_2_lbl.flip())
 
-        self.logo_lbl = PLabel()
-        self.logo_lbl.resize((SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 4))
-        self.logo_lbl.set_pos((SIZE_LARGE_CELL * 3, SIZE_LARGE_CELL * 2))
-        self.logo_lbl.set_bg_image(load_image("data\\image\\logo.png"))
-        self.add_widget(self.logo_lbl.flip())
+
 
     def on_open(self):
         self.run_show_menu_animation()
@@ -80,4 +82,9 @@ class Menu(Layout):
             for e in pygame.event.get():
                 if e.type == pygame.MOUSEBUTTONDOWN:
                     return
+                if e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE:
+                    return
 
+    def on_key_press(self, event):
+        if event.type == pygame.KEYDOWN:
+            self.play_1_player_button.clicked()

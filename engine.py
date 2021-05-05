@@ -78,6 +78,9 @@ class Application:
     def get_layout(self, key: str):
         return self.__layouts[key]
 
+    def get_cur_layout(self):
+        return self.get_layout(self.mode)
+
     def show_arrow(self):
         self.__show_arrow = True
 
@@ -124,29 +127,9 @@ class Application:
         while self.__running:
             tick = self.clock.tick(self.fps)
 
-            layout = self.get_layout(self.mode)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.stop()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.dispatch_event_layout('on_mouse_press', event)
-                elif event.type == pygame.KEYDOWN:
-                    self.dispatch_event_layout('on_key_press', event)
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    self.dispatch_event_layout('on_mouse_release', event)
-                elif event.type == pygame.KEYUP:
-                    self.dispatch_event_layout('on_key_release', event)
-                else:
-                    self.dispatch_event_layout('on_other_events', event)
-
-            layout.update(tick if not self.smooth else round(1 / self.fps * 1000))
-
-            self.screen.fill((100, 0, 0))
-            layout.render(self.screen)  # Прорисовка всех объектов пространства
-
-            # Отрисовка курсора, если мышь внутри окна
-            if self.__image_arrow and pygame.mouse.get_focused() and self.show_arrow:
-                self.screen.blit(self.__image_arrow, (pygame.mouse.get_pos()))
+            self.update_events()
+            self.update_layout(tick if not self.smooth else 1000 // self.fps)
+            self.render()
 
             # Дебаг
             if self.debug:
@@ -163,8 +146,39 @@ class Application:
                             debug_text, True, pygame.color.Color("white")
                         ), 0, 0.5),
                     (0, 0))
+            self.flip()
 
-            pygame.display.flip()
+    def update_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.stop()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.dispatch_event_layout('on_mouse_press', event)
+            elif event.type == pygame.KEYDOWN:
+                self.dispatch_event_layout('on_key_press', event)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.dispatch_event_layout('on_mouse_release', event)
+            elif event.type == pygame.KEYUP:
+                self.dispatch_event_layout('on_key_release', event)
+            else:
+                self.dispatch_event_layout('on_other_events', event)
+
+    def update_layout(self, tick: int):
+        layout = self.get_cur_layout()
+        layout.update(tick)
+
+    def render(self):
+        layout = self.get_cur_layout()
+        self.screen.fill((100, 0, 0))
+        layout.render(self.screen)  # Прорисовка всех объектов пространства
+
+        # Отрисовка курсора, если мышь внутри окна
+        if self.__image_arrow and pygame.mouse.get_focused() and self.show_arrow:
+            self.screen.blit(self.__image_arrow, (pygame.mouse.get_pos()))
+
+    @staticmethod
+    def flip():
+        pygame.display.flip()
 
     def close(self):
         self.stop()

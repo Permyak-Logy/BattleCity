@@ -17,6 +17,10 @@ class PWidget(pygame.sprite.Sprite):
     def flip(self):
         del self.image
         self.image = pygame.Surface(size=self.get_size())
+        if not self._is_show:
+            self.image.fill((0, 0, 0))
+            self.image.set_colorkey((0, 0, 0))
+            return self
         self.image.fill((1, 1, 1) if not self._color_key else self._color_key)
         self.image.set_colorkey(self._color_key)
 
@@ -58,6 +62,14 @@ class PWidget(pygame.sprite.Sprite):
 
     def update(self, *args):
         self.flip()
+
+    def hide(self):
+        self._is_show = False
+        return self
+
+    def show(self):
+        self._is_show = True
+        return self
 
 
 class PLabel(PWidget):
@@ -155,6 +167,8 @@ class PDisplayNumber(PLabel):
 
     def flip(self):
         super().flip()
+        if not self._is_show:
+            return self
         nums = list(map(int, str(self.cur_number % 10 ** self.count_nums)))
         size_n = (self.get_size()[0] // self.count_nums, self.get_size()[1])
         if self.align == 'L':

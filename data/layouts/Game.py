@@ -13,15 +13,20 @@ import random
 
 class Game(Layout):
     count_tanks_labels: list
+    life_player_1_lbl: PLabel
     life_player_1_display: PDisplayNumber
+    life_player_2_lbl: PLabel
     life_player_2_display: PDisplayNumber
+    number_level_lbl: PLabel
     number_level_display: PDisplayNumber
+    pause_label: PWidget
 
     def __init__(self, application: Application, layout_config_filename: str = None):
         super().__init__(application, layout_config_filename=layout_config_filename)
         self.global_data = {}
         self.level_data = {}
         self.level_finished = True
+        self.pause_status = False
 
         # Все необходимые группы
         self.all_sprites = pygame.sprite.Group()
@@ -47,6 +52,15 @@ class Game(Layout):
         self.bonuses_group = pygame.sprite.Group()
 
         self.init_ui()
+        self.icon_warring = pygame.Surface(size=(1, 1))
+        self.icon_warring.fill(BG_COLOR)
+
+        self.icon_death = pygame.Surface(size=(1, 1))
+        self.icon_death.fill(BG_COLOR)
+
+        img = load_image("data\\image\\icon_enemy_tank.png", -1)
+        self.icon_ready = pygame.transform.scale(self.icon_death, img.get_size())
+        self.icon_ready.blit(img, (0, 0))
 
     def init_ui(self):
         """Инициализация интерфейса"""
@@ -66,9 +80,18 @@ class Game(Layout):
             PLabel().set_bg_image(icon_tank).resize(
                 (SIZE_SMALL_CELL, SIZE_SMALL_CELL)).set_pos(
                 (WIDTH_W - SIZE_MINI_CELL * 7 + SIZE_SMALL_CELL * (i % 2),
-                 SIZE_SMALL_CELL * (i // 2 + 2))).set_font(pygame.font.Font(None, 20)).flip()
+                 SIZE_SMALL_CELL * (i // 2 + 2))).set_font(pygame.font.Font(None, 20)).set_bg_image(
+                img_background_right_label).flip()
             for i in range(20)
         ]
+
+        self.life_player_1_lbl = PLabel()
+        self.life_player_1_lbl.resize(size=(SIZE_LARGE_CELL, SIZE_LARGE_CELL))
+        self.life_player_1_lbl.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL, SIZE_SMALL_CELL * 15))
+        img_lp1l = load_image("data\\image\\life_player_1.png")
+        self.life_player_1_lbl.set_bg_image(img_lp1l)
+        self.life_player_1_lbl.set_color_key(img_lp1l.get_at((0, 0)))
+        self.life_player_1_lbl.flip()
 
         self.life_player_1_display = PDisplayNumber(Animation.cut_sheet(
             load_image("data\\image\\numbers.png", -1), 5, 2), 2)
@@ -77,6 +100,14 @@ class Game(Layout):
         self.life_player_1_display.resize(size=(SIZE_SMALL_CELL * 2, SIZE_SMALL_CELL))
         self.life_player_1_display.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL * 2, SIZE_LARGE_CELL * 8)).flip()
 
+        self.life_player_2_lbl = PLabel()
+        self.life_player_2_lbl.resize(size=(SIZE_LARGE_CELL, SIZE_LARGE_CELL))
+        self.life_player_2_lbl.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL, SIZE_SMALL_CELL * 19))
+        img_lp2l = load_image("data\\image\\life_player_2.png")
+        self.life_player_2_lbl.set_bg_image(img_lp2l)
+        self.life_player_2_lbl.set_color_key(img_lp2l.get_at((0, 0)))
+        self.life_player_2_lbl.flip()
+
         self.life_player_2_display = PDisplayNumber(Animation.cut_sheet(
             load_image("data\\image\\numbers.png", -1), 5, 2), 2)
         self.life_player_2_display.set_align('L')
@@ -84,18 +115,39 @@ class Game(Layout):
         self.life_player_2_display.resize(size=(SIZE_SMALL_CELL * 2, SIZE_SMALL_CELL))
         self.life_player_2_display.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL * 2, SIZE_LARGE_CELL * 10)).flip()
 
+        self.number_level_lbl = PLabel()
+        self.number_level_lbl.resize(size=(SIZE_LARGE_CELL, SIZE_LARGE_CELL))
+        self.number_level_lbl.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL, SIZE_LARGE_CELL * 11))
+        img_nll = load_image("data\\image\\level_icon.png")
+        self.number_level_lbl.set_bg_image(img_nll)
+        self.number_level_lbl.set_color_key(img_nll.get_at((0, 0)))
+        self.number_level_lbl.flip()
+
         self.number_level_display = PDisplayNumber(Animation.cut_sheet(
-            load_image("data\\image\\numbers.png", -1), 5, 2), 3)
+            load_image("data\\image\\numbers.png", -1), 5, 2), 2)
         self.number_level_display.set_align('R')
         self.number_level_display.set_bg_image(img_background_right_label)
-        self.number_level_display.resize(size=(SIZE_SMALL_CELL * 3, SIZE_SMALL_CELL))
+        self.number_level_display.resize(size=(SIZE_SMALL_CELL * 2, SIZE_SMALL_CELL))
         self.number_level_display.set_pos((WIDTH_W - RIGHT + SIZE_SMALL_CELL, SIZE_LARGE_CELL * 12)).flip()
+
+        self.pause_label = PWidget()
+        self.pause_label.resize((5 * SIZE_SMALL_CELL, SIZE_SMALL_CELL))
+        img_pause_label = load_image("data\\image\\pause.png", -1)
+        self.pause_label.set_bg_image(img_pause_label)
+        self.pause_label.set_color_key(img_pause_label.get_colorkey())
+        self.pause_label.set_pos(((SIZE_LARGE_CELL * WIDTH_F) // 2 - self.pause_label.get_size()[0] // 2 + LEFT,
+                                  (SIZE_LARGE_CELL * HEIGHT_F) // 2 - self.pause_label.get_size()[1] // 2 + TOP))
+        self.pause_label.hide().flip()
 
         self.add_widgets(background_right_label,
                          *self.count_tanks_labels,
+                         self.life_player_1_lbl,
                          self.life_player_1_display,
+                         self.life_player_2_lbl,
                          self.life_player_2_display,
-                         self.number_level_display)
+                         self.number_level_lbl,
+                         self.number_level_display,
+                         self.pause_label)
 
     def render(self, screen: pygame.Surface):
         """Отрисовка всех объектов"""
@@ -348,6 +400,15 @@ class Game(Layout):
 
         tick = get_tick(args)
 
+        if self.pause_status:
+            if bool(self.app.clock.get_time().real % 2):
+                self.pause_label.show().flip()
+            else:
+                self.pause_label.hide().flip()
+            return
+        else:
+            self.pause_label.hide().flip()
+
         # Обновляем тайминг спавна врагов
         self.level_data["ready_spawn_enemy"] += self.level_data["speed_spawn"] * tick / 1000
         if self.level_data["ready_spawn_enemy"] > 1:
@@ -367,23 +428,14 @@ class Game(Layout):
     def update_right_interface(self):
         """Обновляет интерфейс справа"""
 
-        icon_ready = pygame.Surface(size=(1, 1))
-        icon_ready.fill((0, 255, 0))
-
-        icon_warring = pygame.Surface(size=(1, 1))
-        icon_warring.fill(pygame.Color('yellow'))
-
-        icon_death = pygame.Surface(size=(1, 1))
-        icon_death.fill((100, 0, 0))
-
         count_active_spawners = sum(map(lambda s: s.spawning, self.get_spawns(Enemy)))
         for i, widget in enumerate(self.count_tanks_labels):
             if len(self.level_data["enemies"]) - count_active_spawners > i:
-                widget.set_bg_image(icon_ready).flip()
+                widget.set_bg_image(self.icon_ready).flip()
             elif len(self.level_data["enemies"]) + len(self.enemy_group.sprites()) > i:
-                widget.set_bg_image(icon_warring).flip()
+                widget.set_bg_image(self.icon_warring).flip()
             else:
-                widget.set_bg_image(icon_death).flip()
+                widget.set_bg_image(self.icon_death).flip()
 
         # Обновляем количество жизней у игрока
         spawns_players: List[Spawn] = self.get_spawns(Player)
@@ -392,6 +444,9 @@ class Game(Layout):
                                                   - int(bool(self.get_player(1)))).flip()
         self.life_player_2_display.set_cur_number(self.global_data['life_player_2'] - int(spawns_players[1].spawning)
                                                   - int(bool(self.get_player(2)))).flip()
+
+    def toggle_pause(self):
+        self.pause_status = not self.pause_status
 
     def check_on_win(self) -> bool:
         return not self.get_count_enemy_left() > 0
@@ -404,6 +459,9 @@ class Game(Layout):
         life = self.global_data['life_player_1'] + self.global_data['life_player_2']
         return not (life or tanks)
 
+    def check_level_finished(self):
+        return self.check_on_win() or self.check_on_lose()
+
     def get_count_enemy_left(self) -> int:
         enemies_ready = len(self.level_data["enemies"])
         active_enemies = len(self.enemy_group.sprites())
@@ -414,33 +472,41 @@ class Game(Layout):
         self.init_global_data(players_is_2)
         self.next_level()
 
+    def on_close(self):
+        self.empty_all_sprites()
+        self.global_data.clear()
+        self.level_data.clear()
+
     def on_key_press(self, event):
-        if self.get_player(1):
-            if event.key == pygame.K_w:
-                self.get_player(1).set_move(y=-1)
-            elif event.key == pygame.K_s:
-                self.get_player(1).set_move(y=1)
-            elif event.key == pygame.K_a:
-                self.get_player(1).set_move(x=-1)
-            elif event.key == pygame.K_d:
-                self.get_player(1).set_move(x=1)
-            elif event.key == pygame.K_SPACE:
-                self.get_player(1).attack()
-
-        if self.get_player(2):
-            if event.key == pygame.K_UP:
-                self.get_player(2).set_move(y=-1)
-            elif event.key == pygame.K_DOWN:
-                self.get_player(2).set_move(y=1)
-            elif event.key == pygame.K_LEFT:
-                self.get_player(2).set_move(x=-1)
-            elif event.key == pygame.K_RIGHT:
-                self.get_player(2).set_move(x=1)
-            elif event.key == pygame.K_KP0:
-                self.get_player(2).attack()
-
         if event.key == pygame.K_ESCAPE:
             self.app.stop()
+
+        if event.key == pygame.K_p and not self.check_level_finished():
+            self.toggle_pause()
+        if not self.pause_status:
+            if self.get_player(1):
+                if event.key == pygame.K_w:
+                    self.get_player(1).set_move(y=-1)
+                elif event.key == pygame.K_s:
+                    self.get_player(1).set_move(y=1)
+                elif event.key == pygame.K_a:
+                    self.get_player(1).set_move(x=-1)
+                elif event.key == pygame.K_d:
+                    self.get_player(1).set_move(x=1)
+                elif event.key == pygame.K_SPACE:
+                    self.get_player(1).attack()
+
+            if self.get_player(2):
+                if event.key == pygame.K_UP:
+                    self.get_player(2).set_move(y=-1)
+                elif event.key == pygame.K_DOWN:
+                    self.get_player(2).set_move(y=1)
+                elif event.key == pygame.K_LEFT:
+                    self.get_player(2).set_move(x=-1)
+                elif event.key == pygame.K_RIGHT:
+                    self.get_player(2).set_move(x=1)
+                elif event.key == pygame.K_KP0:
+                    self.get_player(2).attack()
 
     def on_key_release(self, event):
         if self.get_player(1):
@@ -470,7 +536,7 @@ class Game(Layout):
             elif self.check_on_lose():
                 self.run_animation_table_scores()
                 self.run_animation_lose()
-                self.app.stop()
+                self.app.open_layout('menu')
 
         elif event.type == IMMORTALITY_END_P1:
             player = self.get_player(1)
@@ -1315,14 +1381,17 @@ class BonusConcreteWall(ConcreteWall):
     # TODO Заменяют стандартные стены и после на своём месте оставляют уже рабочую стену
     def __init__(self, layout, pos):
         super().__init__(layout, pos)
-        self.delay = 10
+        self.delay = 3
         a = self.animations_data[self.animation[0]]
         a.set_speed(1)
         a.set_speed_m(1)
 
+        pygame.sprite.spritecollide(self, self.layout.brick_wall_group, dokill=True)
+
     def update(self, *args):
         super().update(*args)
-        if self.animations_data[self.animation[0]].rep >= 3:
+        if self.animations_data[self.animation[0]].rep >= self.delay:
+            BrickWall(self.layout, (self.get_cell()[0] - 0.5, self.get_cell()[1] + 0.5))
             self.kill()
 
 
@@ -1363,7 +1432,7 @@ class Headquarters(Actor):
 
     def update(self, *args):
         tick = get_tick(args)
-        if self.stars < 0 and self.is_damaged:
+        if self.health <= 0 and self.is_damaged:
             self.is_damaged = False
             self.set_animation(f"state_-1_0_-1")
             BigBang(self.layout, self.get_center())
@@ -1372,7 +1441,7 @@ class Headquarters(Actor):
             self.is_destroy = True
 
         elif self.is_damaged:
-            self.set_animation(f"state_{self.stars}_{self.sight[0]}_{self.sight[1]}")
+            self.set_animation(f"state_0_0_-1")
         self.update_animation(tick)
 
 
@@ -1554,6 +1623,9 @@ class Spawn(Actor):
 
 
 class Bonus(Actor):
+    sound_on_create = pygame.mixer.Sound('data\\music\\bonus_created.wav')
+    sound_on_activated = pygame.mixer.Sound('data\\music\\bonus_activated.wav')
+
     def __init__(self, layout: Game, pos, key=None):
         super().__init__(layout, pos=pos)
         if ONLY_ONE_BONUS_ON_MAP:
@@ -1574,12 +1646,7 @@ class Bonus(Actor):
         img2.set_colorkey(img2.get_at((0, 0)))
 
         self.set_state_image(img)
-        # TODO: Поправить баг с отабражением анимации
-        # a: Animation = self.animations_data[self.animation[0]]
-        # a.set_sheet([img, pygame.Surface(size=(1, 1))])
-        # a.set_speed(2)
-        # a.set_type('f')
-        # a.set_speed_m(5)
+        self.sound_on_create.play()
 
     def update(self, *args):
         self.update_animation(get_tick(args))
@@ -1600,7 +1667,6 @@ class Bonus(Actor):
 
     def activate(self, by: Player):
         Score(self.layout, coords=self.get_center(), score=500)
-
         if self.key == 0:
             by.set_immortality(True, 10)
         elif self.key == 1:
@@ -1627,3 +1693,4 @@ class Bonus(Actor):
         elif self.key == 6:
             by.set_stars(3)
             by.passage += 1
+        self.sound_on_activated.play()
