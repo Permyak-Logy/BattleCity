@@ -54,6 +54,7 @@ class PWidget(pygame.sprite.Sprite):
         return self
 
     def set_pos(self, pos: tuple):
+        pos = tuple(map(int, pos))
         self.rect = self.rect.move(*pos)
         return self
 
@@ -79,6 +80,7 @@ class PLabel(PWidget):
         self._font = pygame.font.Font(None, 50)
         self._bg_text = None
         self._color_text = (255, 255, 255)
+        self.shift_text_px = (1, 1)
 
     def flip(self):
         super().flip()
@@ -87,14 +89,15 @@ class PLabel(PWidget):
         img_text: pygame.Surface = (self._font.render(self._text, True, self._color_text, self._bg_text))
 
         pos = (
-            self.image.get_width() // 2 - img_text.get_width() // 2,
-            self.image.get_height() // 2 - img_text.get_height() // 2
+            self.shift_text_px[0] + self.image.get_width() / 2 - img_text.get_width() / 2,
+            self.shift_text_px[1] + self.image.get_height() / 2 - img_text.get_height() / 2
         )
-        self.image.blit(img_text, pos)
+        self.image.blit(img_text, tuple(map(int, pos)))
         return self
 
     def set_color_text(self, color_text):
         self._color_text = color_text
+        return self
 
     def set_text(self, text: str):
         self._text = text

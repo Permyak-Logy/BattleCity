@@ -7,7 +7,9 @@ if __name__ == "__main__":
 
     from data.layouts.Game import Game
     from data.layouts.Menu import Menu
+    from data.layouts.Editor import Editor
 
-    app.load_layout('game', Game(app, 'data\\layouts\\Game.json'))
-    app.load_layout('menu', Menu(app, 'data\\layouts\\Menu.json'))
+    app.load_layout('game', Game(app))
+    app.load_layout('menu', Menu(app))
+    app.load_layout('editor', Editor(app))
     app.run()

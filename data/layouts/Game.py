@@ -12,6 +12,9 @@ import random
 
 
 class Game(Layout):
+    game_widgets: List[PWidget]
+    score_widgets: List[PWidget]
+
     count_tanks_labels: list
     life_player_1_lbl: PLabel
     life_player_1_display: PDisplayNumber
@@ -21,8 +24,23 @@ class Game(Layout):
     number_level_display: PDisplayNumber
     pause_label: PWidget
 
-    def __init__(self, application: Application, layout_config_filename: str = None):
-        super().__init__(application, layout_config_filename=layout_config_filename)
+    hi_score: PLabel
+    hi_score_number: PLabel
+
+    stage_number: PLabel
+    first_player_score: PLabel
+    second_player_score: PLabel
+    number_first_player_score: PLabel
+    number_second_player_score: PLabel
+    ptses: List[PLabel]
+    count_tanks_kills: List[PLabel]
+    total_lbl: PLabel
+    total_numbers: PLabel
+    bonus_lbl: PLabel
+    bonus_pts: PLabel
+
+    def __init__(self, application: Application):
+        super().__init__(application)
         self.global_data = {}
         self.level_data = {}
         self.level_finished = True
@@ -51,7 +69,9 @@ class Game(Layout):
         self.spawn_group = pygame.sprite.Group()
         self.bonuses_group = pygame.sprite.Group()
 
-        self.init_ui()
+        self.init_ui_game()
+        self.init_ui_score()
+
         self.icon_warring = pygame.Surface(size=(1, 1))
         self.icon_warring.fill(BG_COLOR)
 
@@ -62,7 +82,7 @@ class Game(Layout):
         self.icon_ready = pygame.transform.scale(self.icon_death, img.get_size())
         self.icon_ready.blit(img, (0, 0))
 
-    def init_ui(self):
+    def init_ui_game(self):
         """Инициализация интерфейса"""
 
         img_background_right_label = pygame.Surface(size=(100, HEIGHT_W * 2))
@@ -148,6 +168,82 @@ class Game(Layout):
                          self.number_level_lbl,
                          self.number_level_display,
                          self.pause_label)
+
+        self.game_widgets = [background_right_label,
+                             *self.count_tanks_labels,
+                             self.life_player_1_lbl,
+                             self.life_player_1_display,
+                             self.life_player_2_lbl,
+                             self.life_player_2_display,
+                             self.number_level_lbl,
+                             self.number_level_display,
+                             self.pause_label]
+
+    def init_ui_score(self):
+        font = pygame.font.Font('data\\fonts\\font-7x7.ttf', int(SIZE_SMALL_CELL))
+        self.stage_number = PLabel("STAGE   1").set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 5, SIZE_LARGE_CELL * 2)).resize((SIZE_LARGE_CELL * 5, SIZE_SMALL_CELL)).flip()
+        self.add_widget(self.stage_number)
+
+        self.first_player_score = PLabel("\u01c0\u2014PLAYER").set_font(font).set_pos(
+            (SIZE_LARGE_CELL, SIZE_LARGE_CELL * 3)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.first_player_score.set_color_text((160, 0, 0))
+        self.first_player_score.flip()
+        self.add_widget(self.first_player_score)
+
+        self.number_first_player_score = PLabel("        3500").set_font(font).set_pos(
+            (SIZE_LARGE_CELL, SIZE_LARGE_CELL * 4)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.number_first_player_score.set_color_text((214, 137, 16)).flip()
+        self.add_widget(self.number_first_player_score)
+
+        self.second_player_score = PLabel("\u01c1\u2014PLAYER").set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 3)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.second_player_score.set_color_text((160, 0, 0))
+        self.second_player_score.flip()
+        self.add_widget(self.second_player_score)
+
+        self.number_second_player_score = PLabel("        3500").set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 4)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.number_second_player_score.set_color_text((214, 137, 16)).flip()
+        self.add_widget(self.number_second_player_score)
+
+        self.ptses = []
+        for i in range(8):
+            pts = PLabel(f"{i}000  PTS").set_font(font).set_pos(
+                (SIZE_LARGE_CELL + SIZE_LARGE_CELL * 9 * (i // 4), SIZE_LARGE_CELL * (5 + i % 4))
+            ).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL)).flip()
+            self.add_widget(pts)
+            self.ptses.append(pts)
+
+        self.count_tanks_kills = []
+        for i in range(8):
+            ctk = PLabel(f'1{i}\u003c' if not i // 4 else f'\u003e1{i}').set_font(font).set_pos(
+                (SIZE_LARGE_CELL * 5 + SIZE_LARGE_CELL * 3 * (i // 4), SIZE_LARGE_CELL * (5 + i % 4))
+            ).resize((SIZE_LARGE_CELL * 2, SIZE_SMALL_CELL)).flip()
+            self.add_widget(ctk)
+            self.count_tanks_kills.append(ctk)
+
+        self.total_lbl = PLabel("TOTAL").set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 1.5, SIZE_LARGE_CELL * 9)
+        ).resize((SIZE_LARGE_CELL * 4.5, SIZE_SMALL_CELL)).flip()
+        self.add_widget(self.total_lbl)
+
+        self.total_numbers = PLabel("18" + "  " * 6 + "10").set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 5, SIZE_LARGE_CELL * 9)
+        ).resize((SIZE_LARGE_CELL * 5, SIZE_SMALL_CELL)).flip()
+        self.add_widget(self.total_numbers)
+
+        self.score_widgets = [
+            self.stage_number,
+            self.first_player_score,
+            self.second_player_score,
+            self.number_first_player_score,
+            self.number_second_player_score,
+            *self.ptses,
+            *self.count_tanks_kills,
+            self.total_lbl,
+            self.total_numbers
+        ]
 
     def render(self, screen: pygame.Surface):
         """Отрисовка всех объектов"""
@@ -267,7 +363,7 @@ class Game(Layout):
             pygame.draw.rect(self.app.screen, BG_COLOR, (0, 0, rect.width, int(rect.height / 100 * i)))
             pygame.draw.rect(self.app.screen, BG_COLOR, (0, rect.height - int(rect.height / 100 * i),
                                                          rect.width, int(rect.height / 100 * i)))
-            pygame.display.flip()
+            self.app.flip()
 
         pygame.event.clear()
 
@@ -275,7 +371,46 @@ class Game(Layout):
         pass
 
     def run_animation_table_scores(self):
-        pass
+        for widget in self.game_widgets:
+            widget.hide().flip()
+
+        def show_number_animation(s_format: str, lbl: PLabel, interval: int, *ranges: range):
+            pass
+
+        def show_steps_animation(interval: int, *lbls):
+            for lbl in lbls:
+                if isinstance(lbl, PLabel):
+                    lbl.show().flip()
+                else:
+                    for lbl_ in lbl:
+                        lbl_.show().flip()
+                self.app.render()
+                self.app.flip()
+                self.app.wait(interval)
+
+        self.app.render()
+        self.app.flip()
+
+        for widget in self.score_widgets:
+            widget.hide().flip()
+
+        self.stage_number.set_text("STAGE   " + str(self.global_data['level_index'] + 1).rjust(3, " ")).show().flip()
+
+        show_steps_animation(1000, self.stage_number,
+                             (self.first_player_score, self.second_player_score,
+                              self.number_first_player_score, self.number_second_player_score))
+        for widget in self.score_widgets:
+            widget.show().flip()
+
+        self.app.render()
+        self.app.flip()
+        self.app.wait(5000)
+        for widget in self.score_widgets:
+            widget.hide().flip()
+
+        for widget in self.game_widgets:
+            widget.show().flip()
+        self.pause_label.hide().flip()
 
     def run_animation_game_over(self):
         pass
@@ -529,6 +664,28 @@ class Game(Layout):
             elif event.key == pygame.K_RIGHT:
                 self.get_player(2).unset_move(x=1)
 
+    def on_joy_button_down(self, event):
+        if event.button == 4:
+            self.app.open_layout('menu')
+
+        if event.button == 7 and not self.check_level_finished():
+            self.toggle_pause()
+
+        if not self.pause_status:
+            if self.get_player(1) and event.joy == 0:
+                if event.button == 0:
+                    self.get_player(1).attack()
+
+            if self.get_player(2) and event.joy == 1:
+                if event.button == 0:
+                    self.get_player(2).attack()
+
+    def on_joy_hat_motion(self, event):
+        player = self.get_player(event.joy + 1)
+        if player and (not all(event.value) or not any(event.value)):
+            player.set_null_move()
+            player.set_move(event.value[0], -event.value[1])
+
     def on_other_events(self, event):
         if event.type == EVENT_LEVEL_FINISHED:
             if self.check_on_win():
@@ -754,8 +911,8 @@ class Character(Actor):
         self.moving = [0, 0]  # Направление движения
         self.travel_speed = 1  # Скорость движения
 
-        self.delta_aligh = 0.2  # Выравнивание на обычной поверхности
-        self.delta_aligh_on_ice = 0.1  # и на льду
+        self.delta_align = 0.25  # Выравнивание на обычной поверхности
+        self.delta_align_on_ice = 0.2  # и на льду
 
         self.damage = 1  # Урон
         self.passage = 0  # Пробитие
@@ -816,7 +973,7 @@ class Character(Actor):
         nx = (self.rect.x - TOP) // SIZE_SMALL_CELL * SIZE_SMALL_CELL + TOP
         ny = (self.rect.y - LEFT) // SIZE_SMALL_CELL * SIZE_SMALL_CELL + LEFT
 
-        delta = self.delta_aligh if not self.is_on_ice() else self.delta_aligh_on_ice
+        delta = self.delta_align if not self.is_on_ice() else self.delta_align_on_ice
 
         if self.rect.x - nx <= delta * SIZE_SMALL_CELL:
             self.set_coords(nx, self.rect.y)

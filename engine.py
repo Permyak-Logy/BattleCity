@@ -5,7 +5,7 @@ import json
 from win32api import GetSystemMetrics
 from extra import load_image, get_tick
 import configparser
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 from widgets import PPushButton
 
 
@@ -15,6 +15,8 @@ class Application:
     smooth: bool
     debug: bool
     size_window: Tuple[int, int]
+
+    joysticks: list
 
     mode = None
     __image_arrow = None
@@ -32,6 +34,16 @@ class Application:
         self.clock = pygame.time.Clock()
 
         self.__running = False
+
+        self.init_joysticks()
+
+    def init_joysticks(self):
+        pygame.joystick.init()
+        self.joysticks = []
+        for i in range(pygame.joystick.get_count()):
+            joystick = pygame.joystick.Joystick(i)
+            joystick.init()
+            self.joysticks.append(joystick)
 
     def wait(self, milliseconds):
         val = 0
@@ -70,6 +82,11 @@ class Application:
 
     def open_layout(self, key_mode: str, *args, **kwargs):
         self.dispatch_event_layout("on_close", *args, **kwargs)
+
+        pygame.mixer.stop()
+        pygame.mixer_music.stop()
+        # for i in range(pygame.mixer.get_num_channels()):
+        #     pygame.mixer.Channel(i).stop()
 
         self.mode = key_mode
 
@@ -160,6 +177,18 @@ class Application:
                 self.dispatch_event_layout('on_mouse_release', event)
             elif event.type == pygame.KEYUP:
                 self.dispatch_event_layout('on_key_release', event)
+            elif event.type == pygame.JOYBUTTONDOWN:
+                self.dispatch_event_layout('on_joy_button_down', event)
+            elif event.type == pygame.JOYBUTTONUP:
+                self.dispatch_event_layout('on_joy_button_up', event)
+            elif event.type == pygame.JOYHATMOTION:
+                self.dispatch_event_layout('on_joy_hat_motion', event)
+            elif event.type == pygame.JOYAXISMOTION:
+                self.dispatch_event_layout('on_joy_axis_motion', event)
+            elif event.type == pygame.JOYDEVICEADDED:
+                self.dispatch_event_layout('on_joy_device_added', event)
+            elif event.type == pygame.JOYDEVICEREMOVED:
+                self.dispatch_event_layout('on_joy_device_removed', event)
             else:
                 self.dispatch_event_layout('on_other_events', event)
 
@@ -169,7 +198,7 @@ class Application:
 
     def render(self):
         layout = self.get_cur_layout()
-        self.screen.fill((100, 0, 0))
+        self.screen.fill((10, 0, 0) if self.debug else (0, 0, 0))
         layout.render(self.screen)  # Прорисовка всех объектов пространства
 
         # Отрисовка курсора, если мышь внутри окна
@@ -197,31 +226,19 @@ class Layout:
     Класс для поверхностей
     """
 
-    def __init__(self, application: Application, layout_config_filename=None):
+    def __init__(self, application: Application, **params):
         self.app = application
-        if not layout_config_filename:
-            self.load_config(
-                os.path.join(os.path.dirname(__file__),
-                             f"{self.__class__.__name__}.json"))
-        else:
-            self.load_config(layout_config_filename)
-
-        self.apply_config()
         self.widget_group = pygame.sprite.Group()
 
-    def load_config(self, filename: str):
-        with open(filename, encoding='utf8') as file:
-            self.config = json.load(file)
-
-    def apply_config(self):
-        bg = self.config.get('background')
+    def set_background(self, bg: Optional[Union[pygame.Surface, str, Tuple[int, int, int]]] = None, scaled=True):
         if isinstance(bg, str):
-            self.set_background(load_image(bg))
-        elif isinstance(bg, list):
+            self.__set_background(load_image(bg), scaled)
+        elif isinstance(bg, tuple):
             img = pygame.Surface(size=(1, 1))
             img.fill(bg)
+            self.__set_background(img)
         else:
-            self.set_background(bg)
+            self.__set_background(bg, scaled)
 
     def update(self, *args):
         tick = get_tick(args)
@@ -232,7 +249,7 @@ class Layout:
             screen.blit(self.image_background, (0, 0))  # Накладывет фон
         self.widget_group.draw(screen)
 
-    def set_background(self, image: Union[pygame.Surface, None], scaled=True):
+    def __set_background(self, image: Union[pygame.Surface, None], scaled=True):
         if image is None:
             # Если указан None то поставит картинку по умолчанию (Чёрный цвет)
             image = pygame.Surface(size=self.app.get_matrix())
