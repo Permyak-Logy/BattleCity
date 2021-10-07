@@ -1,5 +1,3 @@
-from pygame.event import Event
-
 # Размеры клеток в пикселях
 SIZE_MINI_CELL = 8
 SIZE_SMALL_CELL = SIZE_MINI_CELL * 2
@@ -24,17 +22,18 @@ IMMORTALITY_END_P1 = 32776
 IMMORTALITY_END_P2 = 32777
 FREEZING_END = 32778
 
-# # Игровые настройки
+# Игровые настройки
 FRAMES_FROM_EXPLOSIONS = False  # Взрывы от танков наносят урон (Нестандартное дополнение)
 ONLY_ONE_BONUS_ON_MAP = False  # Только один бонус на карте (При новом, все старые очищаются)
 SHOW_FPS = False  # Переключатель данных о быстродействии
 
-# Настройки ИИ (недействительны)
+# Настройки ИИ (УСТАРЕЛО)
 REVIEW_RADIUS_ENEMY = 2.5  # Обзор танков противника
 MAX_REVIEW_WAY = 5  # Максимальный вычисляемый путь
 MAX_ATTEMPTS_FOR_CAL_WAY = 2  # Максимальное кол-во попыток для составления пути
 MIN_WAIT_TIME, MAX_WAIT_TIME = 0.1, 3  # Минимальное и максимальное время ожидание у врагов (в сек.)
 
-BG_COLOR = (130, 130, 130)  # (66, 73, 73)  # Цвет фона
+BG_COLOR = (130, 130, 130)  # Цвет фона
+
 # ЧИТЫ
-NO_COLLISION_FOR_PLAYERS = 0  # Убирает
+NO_COLLISION_FOR_PLAYERS = False  # Убирает столкновения со статичными объектами и врагами (но не со снарядами)

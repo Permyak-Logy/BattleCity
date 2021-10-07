@@ -34,6 +34,7 @@ class Game(Layout):
     number_second_player_score: PLabel
     ptses: List[PLabel]
     count_tanks_kills: List[PLabel]
+    lbl_tanks: List[PLabel]
     total_lbl: PLabel
     total_numbers: PLabel
     bonus_lbl: PLabel
@@ -46,7 +47,7 @@ class Game(Layout):
         self.level_finished = True
         self.pause_status = False
 
-        # Все необходимые группы
+        # Все необходимые группы_
         self.all_sprites = pygame.sprite.Group()
         self.collision_moving_group = pygame.sprite.Group()
         self.collision_bullet_group = pygame.sprite.Group()
@@ -181,56 +182,64 @@ class Game(Layout):
 
     def init_ui_score(self):
         font = pygame.font.Font('data\\fonts\\font-7x7.ttf', int(SIZE_SMALL_CELL))
-        self.stage_number = PLabel("STAGE   1").set_font(font).set_pos(
-            (SIZE_LARGE_CELL * 5, SIZE_LARGE_CELL * 2)).resize((SIZE_LARGE_CELL * 5, SIZE_SMALL_CELL)).flip()
+        self.stage_number = PLabel("STAGE   1", True).set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 5, SIZE_LARGE_CELL * 3)).resize((SIZE_LARGE_CELL * 5, SIZE_SMALL_CELL)).flip()
         self.add_widget(self.stage_number)
 
-        self.first_player_score = PLabel("\u01c0\u2014PLAYER").set_font(font).set_pos(
-            (SIZE_LARGE_CELL, SIZE_LARGE_CELL * 3)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.first_player_score = PLabel("\u01c0\u2014PLAYER", True).set_font(font).set_pos(
+            (SIZE_LARGE_CELL, SIZE_LARGE_CELL * 4)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
         self.first_player_score.set_color_text((160, 0, 0))
         self.first_player_score.flip()
         self.add_widget(self.first_player_score)
 
-        self.number_first_player_score = PLabel("        3500").set_font(font).set_pos(
-            (SIZE_LARGE_CELL, SIZE_LARGE_CELL * 4)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.number_first_player_score = PLabel("    3500", True).set_font(font).set_pos(
+            (SIZE_LARGE_CELL, SIZE_LARGE_CELL * 5)).resize((SIZE_LARGE_CELL * 4, SIZE_LARGE_CELL))
         self.number_first_player_score.set_color_text((214, 137, 16)).flip()
         self.add_widget(self.number_first_player_score)
 
-        self.second_player_score = PLabel("\u01c1\u2014PLAYER").set_font(font).set_pos(
-            (SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 3)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.second_player_score = PLabel("\u01c1\u2014PLAYER", True).set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 4)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
         self.second_player_score.set_color_text((160, 0, 0))
         self.second_player_score.flip()
         self.add_widget(self.second_player_score)
 
-        self.number_second_player_score = PLabel("        3500").set_font(font).set_pos(
-            (SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 4)).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL))
+        self.number_second_player_score = PLabel("    3500", True).set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 10, SIZE_LARGE_CELL * 5)).resize((SIZE_LARGE_CELL * 4, SIZE_LARGE_CELL))
         self.number_second_player_score.set_color_text((214, 137, 16)).flip()
         self.add_widget(self.number_second_player_score)
 
         self.ptses = []
         for i in range(8):
-            pts = PLabel(f"{i}000  PTS").set_font(font).set_pos(
-                (SIZE_LARGE_CELL + SIZE_LARGE_CELL * 9 * (i // 4), SIZE_LARGE_CELL * (5 + i % 4))
-            ).resize((SIZE_LARGE_CELL * 4, SIZE_SMALL_CELL)).flip()
+            pts = PLabel(f"{i}000 PTS", True).set_font(font).set_pos(
+                (SIZE_LARGE_CELL + SIZE_LARGE_CELL * 9 * (i // 4), SIZE_LARGE_CELL * (6 + i % 4))
+            ).resize((SIZE_LARGE_CELL * 4, SIZE_LARGE_CELL)).flip()
             self.add_widget(pts)
             self.ptses.append(pts)
 
         self.count_tanks_kills = []
         for i in range(8):
-            ctk = PLabel(f'1{i}\u003c' if not i // 4 else f'\u003e1{i}').set_font(font).set_pos(
-                (SIZE_LARGE_CELL * 5 + SIZE_LARGE_CELL * 3 * (i // 4), SIZE_LARGE_CELL * (5 + i % 4))
-            ).resize((SIZE_LARGE_CELL * 2, SIZE_SMALL_CELL)).flip()
+            ctk = PLabel(f' 1{i}\u003c' if not i // 4 else f'\u003e1{i} ', True).set_font(font).set_pos(
+                (SIZE_LARGE_CELL * 5 + SIZE_LARGE_CELL * 3 * (i // 4), SIZE_LARGE_CELL * (6 + i % 4))
+            ).resize((SIZE_LARGE_CELL * 2, SIZE_LARGE_CELL)).flip()
             self.add_widget(ctk)
             self.count_tanks_kills.append(ctk)
 
-        self.total_lbl = PLabel("TOTAL").set_font(font).set_pos(
-            (SIZE_LARGE_CELL * 1.5, SIZE_LARGE_CELL * 9)
-        ).resize((SIZE_LARGE_CELL * 4.5, SIZE_SMALL_CELL)).flip()
+        self.lbl_tanks = []
+        for i in range(4):
+            tank = PLabel().set_pos((SIZE_LARGE_CELL * 7, SIZE_LARGE_CELL * (6 + i))).resize(
+                (SIZE_LARGE_CELL, SIZE_LARGE_CELL)
+            ).set_bg_image(load_image(Enemy.assets[i]['images_state'][-1][0], -1))
+            self.add_widget(tank)
+            self.lbl_tanks.append(tank)
+
+        self.total_lbl = PLabel("TOTAL", True).set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 1.5, SIZE_LARGE_CELL * 10)
+        ).resize((SIZE_LARGE_CELL * 4.5, SIZE_LARGE_CELL)).flip()
         self.add_widget(self.total_lbl)
 
-        self.total_numbers = PLabel("18" + "  " * 6 + "10").set_font(font).set_pos(
-            (SIZE_LARGE_CELL * 5, SIZE_LARGE_CELL * 9)
-        ).resize((SIZE_LARGE_CELL * 5, SIZE_SMALL_CELL)).flip()
+        self.total_numbers = PLabel(" 18" + " " * 4 + "10 ", True).set_font(font).set_pos(
+            (SIZE_LARGE_CELL * 5, SIZE_LARGE_CELL * 10)
+        ).resize((SIZE_LARGE_CELL * 5, SIZE_LARGE_CELL)).flip()
         self.add_widget(self.total_numbers)
 
         self.score_widgets = [
@@ -241,9 +250,12 @@ class Game(Layout):
             self.number_second_player_score,
             *self.ptses,
             *self.count_tanks_kills,
+            *self.lbl_tanks,
             self.total_lbl,
             self.total_numbers
         ]
+        for widget in self.score_widgets:
+            widget.hide().flip()
 
     def render(self, screen: pygame.Surface):
         """Отрисовка всех объектов"""
@@ -297,9 +309,12 @@ class Game(Layout):
         self.global_data["player_1_stars"] = 0
         self.global_data["player_2_stars"] = 0
 
+        self.global_data["score_player_1"] = 0
+        self.global_data["score_player_2"] = 0
+
     def init_level_data(self, index: int):
         """Инициация данных о уровне"""
-
+        # TODO: Сделать в у казании количеств типов танков а не список цифр
         self.global_data["level_index"] = index
         try:
             self.level_data: dict = self.global_data["levels_data"][index]
@@ -310,10 +325,8 @@ class Game(Layout):
 
         self.level_data["ready_spawn_enemy"] = 1
         self.level_data["kills"] = {
-            0: 0,
-            1: 0,
-            2: 0,
-            3: 0
+            1: {0: 0, 1: 0, 2: 0, 3: 0},
+            2: {0: 0, 1: 0, 2: 0, 3: 0}
         }
         self.level_data["type_enemy_tanks"] = {
             0: random.choice([3, 4]),
@@ -374,9 +387,6 @@ class Game(Layout):
         for widget in self.game_widgets:
             widget.hide().flip()
 
-        def show_number_animation(s_format: str, lbl: PLabel, interval: int, *ranges: range):
-            pass
-
         def show_steps_animation(interval: int, *lbls):
             for lbl in lbls:
                 if isinstance(lbl, PLabel):
@@ -390,21 +400,71 @@ class Game(Layout):
 
         self.app.render()
         self.app.flip()
+        self.app.wait(500)
 
-        for widget in self.score_widgets:
-            widget.hide().flip()
+        # Устанавливаем значения параметров
+        total_1 = self.global_data['score_player_1']
+        total_2 = self.global_data['score_player_2']
+        self.stage_number.set_text("STAGE  " + str(self.global_data['level_index'] + 1).rjust(1, " ")).show().flip()
 
-        self.stage_number.set_text("STAGE   " + str(self.global_data['level_index'] + 1).rjust(3, " ")).show().flip()
+        self.number_first_player_score.set_text(str(total_1).rjust(8, ' ')).flip()
+        self.number_second_player_score.set_text(str(total_2).rjust(8, ' ')).flip()
+        for pts in self.ptses:
+            pts.set_text(" " * 3 + "0 PTS").flip()
+        for i, ctk in enumerate(self.count_tanks_kills):
+            ctk.set_text('  0\u003c' if not i // 4 else '\u003e 0 ').flip()
 
-        show_steps_animation(1000, self.stage_number,
+        show_steps_animation(700, self.stage_number,
                              (self.first_player_score, self.second_player_score,
                               self.number_first_player_score, self.number_second_player_score))
-        for widget in self.score_widgets:
-            widget.show().flip()
+
+        for i in range(4):
+            pts1, pts2 = self.ptses[i].show().flip(), self.ptses[i + 4].show().flip()
+            ctk1, ctk2 = self.count_tanks_kills[i].show().flip(), self.count_tanks_kills[i + 4].show().flip()
+
+            self.lbl_tanks[i].show().flip()
+
+            range_1 = iter(range(1, self.level_data['kills'][1][i] + 1))
+            range_2 = iter(range(1, self.level_data['kills'][2][i] + 1))
+            raises = 0
+            while raises < 2:
+                self.number_first_player_score.set_text(str(total_1).rjust(8, ' ')).flip()
+                self.number_second_player_score.set_text(str(total_2).rjust(8, ' ')).flip()
+                self.app.render()
+                self.app.flip()
+                self.app.wait(200)
+
+                raises = 0
+                try:
+                    v1 = next(range_1)
+                    pts1.set_text(f"{v1 * (i + 1) * 100} PTS".rjust(8, ' ')).flip()
+                    ctk1.set_text(f"{v1}\u003c".rjust(4, ' ')).flip()
+                    total_1 += (i + 1) * 100
+                except StopIteration:
+                    raises += 1
+
+                try:
+                    v2 = next(range_2)
+                    pts2.set_text(f"{v2 * (i + 1) * 100} PTS".rjust(8, ' ')).flip()
+                    ctk2.set_text("\u003e" + f"{v2}".rjust(2, ' ') + " ").flip()
+                    total_2 += (i + 1) * 100
+                except StopIteration:
+                    raises += 1
+            self.app.wait(500)
+
+        self.total_lbl.show().flip()
+        self.total_numbers.set_text(
+            ' ' +
+            str(sum(self.level_data['kills'][1].values())).rjust(2, ' ') +
+            " " * 4 +
+            str(sum(self.level_data['kills'][2].values())).rjust(2, ' ') +
+            ' '
+        ).show().flip()
 
         self.app.render()
         self.app.flip()
         self.app.wait(5000)
+
         for widget in self.score_widgets:
             widget.hide().flip()
 
@@ -444,10 +504,15 @@ class Game(Layout):
         """Начинает следующий уровень"""
 
         pygame.mixer.stop()  # Останавливаем музыку
+        self.empty_all_sprites()  # Очищаем все объекты
 
         if self.global_data["level_index"] != -1:
             # Выводим счёт
             self.run_animation_table_scores()
+            self.global_data['score_player_1'] += sum(
+                (key + 1) * val * 100 for key, val in self.level_data['kills'][1].items())
+            self.global_data['score_player_2'] += sum(
+                (key + 1) * val * 100 for key, val in self.level_data['kills'][2].items())
 
         self.run_animation_hide_level_map()  # Делаем зановес
 
@@ -491,8 +556,6 @@ class Game(Layout):
             if all(flags):
                 layout.level_data["ready_spawn_enemy"] -= 1
             return all(flags)
-
-        self.empty_all_sprites()  # Очищаем все объекты
 
         # Генерируем непробиваемые стены
         for i in range(-1, WIDTH_F + 1):
@@ -691,6 +754,7 @@ class Game(Layout):
             if self.check_on_win():
                 self.next_level()
             elif self.check_on_lose():
+                self.empty_all_sprites()
                 self.run_animation_table_scores()
                 self.run_animation_lose()
                 self.app.open_layout('menu')
@@ -1308,9 +1372,13 @@ class Enemy(Character):
 
         self.tasks = {}
 
-    def half_damage(self, damage: int, passage: int):
+    def half_damage(self, damage: int, passage: int, by=None):
         super().half_damage(damage, passage)
         self.down_stars()
+
+        if self.is_damaged and self.health <= 0:
+            self.kill(by)
+            return
 
     def set_asset(self):
         self.travel_speed = self.asset.get("travel_speed", self.travel_speed)
@@ -1320,9 +1388,11 @@ class Enemy(Character):
         self.max_bullets = self.asset.get("max_bullets", self.max_bullets)
         self.charging_rate = self.asset.get("charging_rate", self.charging_rate)
 
-    def kill(self):
-        self.layout.level_data["kills"][self.asset["name"]] += 1
+    def kill(self, by=None):
+
         Score(self.layout, self.get_center(), score=(self.asset["name"] + 1) * 100)
+        if isinstance(by, Player):
+            self.layout.level_data["kills"][by.number][self.asset["name"]] += 1
         if self.bonus:
             Bonus(layout=self.layout, pos=(0.5 * random.randrange(0, WIDTH_F * 2),
                                            0.5 * random.randrange(0, WIDTH_F * 2)))
@@ -1538,7 +1608,7 @@ class BonusConcreteWall(ConcreteWall):
     # TODO Заменяют стандартные стены и после на своём месте оставляют уже рабочую стену
     def __init__(self, layout, pos):
         super().__init__(layout, pos)
-        self.delay = 3
+        self.delay = 10
         a = self.animations_data[self.animation[0]]
         a.set_speed(1)
         a.set_speed_m(1)
@@ -1669,13 +1739,17 @@ class Bullet(Actor):
                     # Ломаемся обо всё но наносим урон только не своим объектам
                     if not isinstance(sprite, Player) and not (isinstance(sprite, Bullet) and
                                                                isinstance(sprite.sender, Player)):
-                        sprite.half_damage(self.damage, self.passage)
+                        if isinstance(sprite, Enemy):
+                            sprite.half_damage(self.damage, self.passage, by=self.sender)
+                        else:
+                            sprite.half_damage(self.damage, self.passage)
                     killed = True
                 elif isinstance(self.sender, Enemy):
                     # Пролетаем сквозь всё что не принадлежит группе врагов
                     if not isinstance(sprite, Enemy) and not (isinstance(sprite, Bullet) and
                                                               isinstance(sprite.sender, Enemy)):
                         sprite.half_damage(self.damage, self.passage)
+
                         killed = True
 
                 if isinstance(sprite, Bullet):
@@ -1824,6 +1898,7 @@ class Bonus(Actor):
 
     def activate(self, by: Player):
         Score(self.layout, coords=self.get_center(), score=500)
+        self.layout.global_data[f'score_player_{by.number}'] += 500
         if self.key == 0:
             by.set_immortality(True, 10)
         elif self.key == 1:
@@ -1844,7 +1919,9 @@ class Bonus(Actor):
         elif self.key == 3:
             by.up_stars()
         elif self.key == 4:
-            [s.kill() for s in self.layout.enemy_group.sprites()]
+            for s in self.layout.enemy_group.sprites():
+                s: Enemy
+                s.kill(by)
         elif self.key == 5:
             self.layout.global_data[f"life_player_{by.number}"] += 1
         elif self.key == 6:

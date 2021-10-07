@@ -74,19 +74,22 @@ class PWidget(pygame.sprite.Sprite):
 
 
 class PLabel(PWidget):
-    def __init__(self, text=""):
+    def __init__(self, text="", double_spaces=False):
         super().__init__()
         self._text = text
         self._font = pygame.font.Font(None, 50)
         self._bg_text = None
         self._color_text = (255, 255, 255)
         self.shift_text_px = (1, 1)
+        self._double_spaces = double_spaces
 
     def flip(self):
         super().flip()
         if not self._is_show:
             return self
-        img_text: pygame.Surface = (self._font.render(self._text, True, self._color_text, self._bg_text))
+        img_text: pygame.Surface = (
+            self._font.render(self._text.replace(' ', '  ') if self._double_spaces else self._text, True,
+                              self._color_text, self._bg_text))
 
         pos = (
             self.shift_text_px[0] + self.image.get_width() / 2 - img_text.get_width() / 2,
@@ -99,8 +102,10 @@ class PLabel(PWidget):
         self._color_text = color_text
         return self
 
-    def set_text(self, text: str):
+    def set_text(self, text: str, double_spaces: bool = ...):
         self._text = text
+        if isinstance(double_spaces, bool):
+            self._double_spaces = double_spaces
         return self
 
     def get_text(self):
@@ -119,8 +124,8 @@ class PLabel(PWidget):
 
 
 class PPushButton(PLabel):
-    def __init__(self, text=""):
-        super().__init__(text)
+    def __init__(self, text="", double_spaces=False):
+        super().__init__(text, double_spaces)
         self._func = (lambda *_, **__: None, tuple(), dict())
 
     def connect(self, func: callable, *args, **kwargs):
